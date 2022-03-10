@@ -15,8 +15,8 @@
 
 library(nimble)
 source("sim.SMR.R")
-source("NimbleModel SMR.R")
-source("NimbleFunctions SMR.R")
+source("NimbleModel SMR Poisson.R")
+source("NimbleFunctions SMR Poisson.R")
 source("init.SMR.R")
 source("sSampler.R")
 
