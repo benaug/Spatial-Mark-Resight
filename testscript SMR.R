@@ -1,11 +1,17 @@
 #This is an SMR data simulator and MCMC sampler that handles all sample types
 #1) marked, known ID
-#1) marked, unknown ID
-#1) unmarked, unknown ID
-#1) unknown marked status, unknown ID
+#2) marked, unknown ID
+#3) unmarked, unknown ID
+#4) unknown marked status, unknown ID
 #It handles both "premarked" scenarios where you know the number of marked individuals
 #and "natural" where marks are from natural patterns on the animals so the number of marked 
 #individuals is unknown. For "premarked", consider using the random thinning model with partial ID covariates
+#y[i,j,k] ~ Poisson(lam[i,j,k])
+#y.event[i,j,k,1:3]~Multinomial(theta.marked[1:3],y[i,j,k]) for marked i
+#y.event[i,j,k,1:3]~Multinomial(theta.unmarked[1:3],y[i,j,k]) for unmarked i
+#event 1 is you know the ID
+#event 2 is you know the mark status, but not ID
+#event 3 is you don't know mark status or ID
 
 library(nimble)
 source("sim.SMR.R")
@@ -37,18 +43,18 @@ data=sim.SMR(N=N,n.marked=n.marked,marktype=marktype,
              lam0=lam0,sigma=sigma,K=K,X=X,buff=buff,tlocs=tlocs)
 
 #What is the observed data?
-head(data$samp.type) #vector of each samp.type of each detection
+head(data$samp.type) #vector of each samp.type of each detection. Must be in this order (I think).
 table(data$samp.type)
 head(data$this.j) #trap of capture for each sample
 head(data$this.k) #occasion of each capture for each sample (not used in this "2D" sampler)
-head(data$ID.marked) #true ID's for marked and identified samples
+head(data$ID.marked) #true ID's for marked and identified samples ()
 head(data$locs) #possibly telemetry
 
 ####Fit model in Nimble####
 if(marktype=="natural"){
   M1=40 #Augmentation level for marked.
 }else{
-  M1=n.marked #Set to n.marked if premarked
+  M1=n.marked #Set to n.marked if premarked. psi1 will be estimated, but can be ignored.
 }
 M2=125 #Augmentation level for unmarked
 #Monitor N.M and N.UM, marked and unmarked ind abundance to make sure N.M does not hit M1
@@ -86,24 +92,14 @@ Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3
 # set parameters to monitor
 parameters<-c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked',
               'n.M','n.UM','N.M','N.UM','N.tot')
-# mcmc controls
-nb=0 #burn in. I just set to 0 and discard later
-ni=5000+nb #number of iterations. Will typically need 10's of thousands for good effective sample size
-nc=1 #number of chains. Will not run in parallel without setting it up manually
-nt=1 #thinning rate
-
-#can also monitor a different set of parameters with a different thinning rate
-# parameters2 <- c("ID")
-# nt2=nt*10 #thinning 10x normal here to reduce posterior file size
 
 # Build the model, configure the mcmc, and compile
 start.time<-Sys.time()
 Rmodel <- nimbleModel(code=NimModel, constants=constants, data=Nimdata,check=FALSE,
                       inits=Niminits)
-conf <- configureMCMC(Rmodel,monitors=parameters, thin=nt, useConjugacy = TRUE)
+conf <- configureMCMC(Rmodel,monitors=parameters, thin=1, useConjugacy = TRUE)
 
 ###One *required* sampler replacement
-
 ##Here, we remove the default samplers for y.full and y.event, which are not correct
 #and replace it with the custom "IDSampler"
 conf$removeSampler("y.full")
@@ -154,3 +150,6 @@ plot(mcmc(mvSamples[2:nrow(mvSamples),]))
 
 data$n.M #true number of captured marked individuals
 data$n.UM #true number of captured unmarked individuals
+
+#Important! If N.UM hits M2 during sampling, raise M2. 
+#For an unknown number of marked individuals, if N.M hits M1 during sampling, raise M1.
