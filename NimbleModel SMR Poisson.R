@@ -15,7 +15,7 @@ NimModel <- nimbleCode({
   theta.unmarked[1] <- 0
   theta.unmarked[2:3]~ddirch(alpha.unmarked[1:2])
 
-  #likelihoods (except for s priors)
+  #likelihoods (except for s/z priors)
   #Marked individuals first
   for(i in 1:M1) {
     z[i] ~ dbern(psi1)
@@ -23,6 +23,7 @@ NimModel <- nimbleCode({
     s[i,2] ~ dunif(ylim[1],ylim[2])
     lam[i,1:J] <- GetDetectionRate(s = s[i,1:2], X = X[1:J,1:2], J=J,sigma=sigma, lam0=lam0, z=z[i])
     y.full[i,1:J] ~ dPoissonVector(lam[i,1:J]*K1D[1:J],z=z[i]) #vectorized obs mod
+    #custom distribution that skips likelihood eval for the individuals currently with 0 captures.
     y.event[i,1:J,1:3] ~ dmulti2(y.full[i,1:J],prob=theta.marked[1:3],capcounts=capcounts[i])
   }
 
@@ -33,8 +34,17 @@ NimModel <- nimbleCode({
     s[i,2] ~ dunif(ylim[1],ylim[2])
     lam[i,1:J] <- GetDetectionRate(s = s[i,1:2], X = X[1:J,1:2], J=J,sigma=sigma, lam0=lam0, z=z[i])
     y.full[i,1:J] ~ dPoissonVector(lam[i,1:J]*K1D[1:J],z=z[i]) #vectorized obs mod
+    #custom distribution that skips likelihood eval for the individuals currently with 0 captures.
     y.event[i,1:J,2:3] ~ dmulti2(y.full[i,1:J],prob=theta.unmarked[2:3],capcounts=capcounts[i])
   }
+  
+  # #If you have telemetry
+  # for(i in 1:n.tel.inds){
+  #   for(m in 1:n.locs.ind[i]){
+  #     locs[tel.inds[i],m,1]~dnorm(s[tel.inds[i],1],sd=sigma)
+  #     locs[tel.inds[i],m,2]~dnorm(s[tel.inds[i],2],sd=sigma)
+  #   }
+  # }
   
   #calculate number of marked and unmarked inds captured and abundance
   capcounts[1:M.both] <- Getcapcounts(y.full=y.full[1:M.both,1:J])

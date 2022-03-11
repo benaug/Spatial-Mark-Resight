@@ -1,5 +1,5 @@
 # Spatial-Mark-Resight
-Various spatial mark resight MCMC samplers allowing for all sample types including "unknown marked status".
+Various spatial mark resight MCMC samplers in nimble allowing for all sample types including "unknown marked status". Handles known and unknown number of marked individuals and optional telemetry.
 
 This code contains contributions from Glenn Stauffer (though any problems should be blamed on me).
 

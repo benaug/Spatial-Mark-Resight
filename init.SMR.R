@@ -18,6 +18,7 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked"){
   K1D=data$K1D
   buff<- data$buff
   M.both=M1+M2
+  locs=data$locs
   
   xlim<- c(min(X[,1]),max(X[,1]))+c(-buff, buff)
   ylim<- c(min(X[,2]),max(X[,2]))+c(-buff, buff)
@@ -177,9 +178,19 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked"){
   
   if(!is.finite(sum(ll.y)))stop("Starting observation model likelihood not finite. Possible error in K1D (if supplied by user) or problem initializing data.")
   
+  if(!is.null(dim(data$locs))){
+    max.locs=dim(locs)[2]
+    tel.inds=which(rowSums(is.na(locs[,,1]))<max.locs)
+    n.locs.ind=rowSums(!is.na(locs[,,1]))
+    n.locs.ind=n.locs.ind[tel.inds]
+  }else{
+    tel.inds=NA
+    n.locs.ind=NA
+  }
+  
  
   return(list(s=s,z=z,ID=ID,y.full=y.true2D,y.event=y.true3D,K1D=K1D,
          n.samples=n.samples,n.fixed=n.fixed,samp.type=G.type,this.j=this.j,match=match,
-         xlim=xlim,ylim=ylim))
+         xlim=xlim,ylim=ylim,locs=locs,tel.inds=tel.inds,n.locs.ind=n.locs.ind))
 
 }

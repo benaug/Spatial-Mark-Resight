@@ -6,7 +6,7 @@ e2dist<- function (x, y){
 
 sim.SMR<-
   function(N=50,n.marked=10,lam0=0.25,sigma=0.50,K=10,X=X,buff=3,n.cat=n.cat,
-           theta.marked=c(1,0,0),theta.unmarked=1,K1D=NA,tlocs=0,marktype="natural"){
+           theta.marked=c(1,0,0),theta.unmarked=1,K1D=NA,tlocs=0,marktype="natural",obstype="poisson"){
     if(!marktype%in%c("natural","premarked")){
       stop("marktype must be 'natural' or 'premarked'")
     }
