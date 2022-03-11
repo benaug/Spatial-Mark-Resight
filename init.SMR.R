@@ -4,7 +4,7 @@ e2dist<- function (x, y){
   matrix(dvec, nrow = nrow(x), ncol = nrow(y), byrow = F)
 }
 
-init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked"){
+init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisson"){
   library(abind)
   #extract observed data
   this.j=data$this.j
@@ -174,7 +174,20 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked"){
     y.true3D[ID[l],this.j[l],G.type[l]]=y.true3D[ID[l],this.j[l],G.type[l]]+1
   }
   y.true2D=apply(y.true3D,c(1,2),sum)
-  ll.y=dpois(y.true2D,K1D*lamd*z,log=TRUE)
+  
+  if(obstype=="poisson"){
+    ll.y=dpois(y.true2D,K1D*lamd*z,log=TRUE)
+  }else if(obstype=="negbin"){
+    theta.d=inits$theta.d
+    ll.y=y.true2D*0
+    for(i in 1:M.both){
+      if(z[i]==1){
+        ll.y[i,]=dnbinom(y.true2D[i,],mu=lamd[i,],size=theta.d*K1D,log=TRUE)
+      }
+    }
+  }else{
+    stop("obstype not recognized")
+  }
   
   if(!is.finite(sum(ll.y)))stop("Starting observation model likelihood not finite. Possible error in K1D (if supplied by user) or problem initializing data.")
   
@@ -188,7 +201,6 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked"){
     n.locs.ind=NA
   }
   
- 
   return(list(s=s,z=z,ID=ID,y.full=y.true2D,y.event=y.true3D,K1D=K1D,
          n.samples=n.samples,n.fixed=n.fixed,samp.type=G.type,this.j=this.j,match=match,
          xlim=xlim,ylim=ylim,locs=locs,tel.inds=tel.inds,n.locs.ind=n.locs.ind))

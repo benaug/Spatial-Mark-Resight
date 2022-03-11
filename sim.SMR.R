@@ -5,7 +5,7 @@ e2dist<- function (x, y){
 }
 
 sim.SMR<-
-  function(N=50,n.marked=10,lam0=0.25,sigma=0.50,K=10,X=X,buff=3,n.cat=n.cat,
+  function(N=50,n.marked=10,lam0=NA,theta.d=NA,sigma=0.50,K=10,X=X,buff=3,
            theta.marked=c(1,0,0),theta.unmarked=1,K1D=NA,tlocs=0,marktype="natural",obstype="poisson"){
     if(!marktype%in%c("natural","premarked")){
       stop("marktype must be 'natural' or 'premarked'")
@@ -19,7 +19,6 @@ sim.SMR<-
     ylim=c(min(X[,2]),max(X[,2]))+c(-buff,buff)
     s<- cbind(runif(N, xlim[1],xlim[2]), runif(N,ylim[1],ylim[2]))
     D<- e2dist(s,X)
-    lamd<- lam0*exp(-D*D/(2*sigma*sigma))
     J=nrow(X)
     
     #trap operation
@@ -38,11 +37,28 @@ sim.SMR<-
     
     # Capture and mark individuals
     y <-array(0,dim=c(N,J,K))
-    for(i in 1:N){
-      for(j in 1:J){
-        y[i,j,]=rpois(K1D[j],lamd[i,j])
-      }
-    } 
+    if(obstype=="poisson"){
+      if(is.na(lam0))stop("must provide lam0 for poisson obstype")
+      lamd<- lam0*exp(-D*D/(2*sigma*sigma))
+      for(i in 1:N){
+        for(j in 1:J){
+          y[i,j,1:K1D[j]]=rpois(K1D[j],lamd[i,j])
+        }
+      } 
+    }else if(obstype=="negbin"){
+      if(is.na(lam0))stop("must provide lam0 for negbin obstype")
+      if(is.na(theta.d))stop("Must provide theta for negbin obstype")
+      lamd<- lam0*exp(-D*D/(2*sigma*sigma))
+      for(i in 1:N){
+        for(j in 1:J){
+          for(k in 1:K){
+            y[i,j,1:K1D[j]]=rnbinom(K1D[j],mu=lamd[i,j],size=theta.d)
+          }
+        }
+      } 
+    }else{
+      stop("obstype not recognized")
+    }
 
     if(marktype=="natural"){
       #reorder data so enough marked guys are at the top

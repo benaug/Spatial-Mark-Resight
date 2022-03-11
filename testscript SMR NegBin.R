@@ -1,3 +1,8 @@
+#Negative Binomial observation model. You'll need "better data" to estimate overdispersion.
+#Data simulator set up for 20 "premarked" individuals with telemetry and perfect marked individual
+#ID probability. High marked individual ID prob and/or telemetry likely required to use this model.
+#If you see theta.d, the overdispersion parameter, reproducing the prior, it is not identifiable for that dataset.
+
 #This is an SMR data simulator and MCMC sampler that handles all sample types
 #1) marked, known ID
 #2) marked, unknown ID
@@ -21,8 +26,8 @@
 
 library(nimble)
 source("sim.SMR.R")
-source("NimbleModel SMR Poisson.R")
-source("NimbleFunctions SMR Poisson.R")
+source("NimbleModel SMR NegBin.R")
+source("NimbleFunctions SMR NegBin.R")
 source("init.SMR.R")
 source("sSampler.R")
 
@@ -32,23 +37,28 @@ nimbleOptions('MCMCjointlySamplePredictiveBranches')
 
 ####Simulate some data####
 N=78
-n.marked=12
-lam0=0.5
+n.marked=20
+lam0=0.25
+theta.d=0.025
 sigma=0.5
 K=10 #number of occasions
 buff=3 #state space buffer
 X<- expand.grid(3:11,3:11) #make a trapping array
 #theta is probability of observing each sample type for marked and unmarked individuals
-theta.marked=c(0.75,0.15,0.1) #P(ID, Marked no ID, unk status). must sum to 1
-theta.unmarked=0.75 #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
+theta.marked=c(1,0,0) #P(ID, Marked no ID, unk status). must sum to 1
+theta.unmarked=1 #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
 marktype="premarked" #are individuals premarked, or naturally marked?
 # marktype="natural"
-obstype="poisson"
-tlocs=0 #number of telemetry locs/marked individual. For "premarked"
+obstype="negbin"
+tlocs=10 #number of telemetry locs/marked individual. For "premarked"
 data=sim.SMR(N=N,n.marked=n.marked,marktype=marktype,
              theta.marked=theta.marked,theta.unmarked=theta.unmarked,
-             lam0=lam0,sigma=sigma,K=K,X=X,buff=buff,tlocs=tlocs,
+             lam0=lam0,theta.d=theta.d,sigma=sigma,K=K,X=X,buff=buff,tlocs=tlocs,
              obstype=obstype)
+#look at i x j x k counts to see if negbin parameters produce realistic counts
+table(data$y)
+data$n.M #number captured marked inds
+data$n.UM #number captured unmarked inds
 
 #What is the observed data?
 head(data$samp.type) #vector of each samp.type of each detection. Must be in this order (I think).
@@ -76,40 +86,40 @@ M.both=M1+M2
 #model likelihood is finite
 #also use this function checks to make sure theta.marked and theta.unmarked inits are in
 #the correct structure. 
-inits=list(lam0=lam0,sigma=sigma)
+inits=list(lam0=1,sigma=0.6,theta.d=0.01)
 
 #This function structures the simulated data to fit the model in Nimble (some more restructing below)
 #Also checks some inits
-nimbuild=init.SMR(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="poisson")
+nimbuild=init.SMR(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="negbin")
 
 #inits for nimble
 #full inits. Nimble can initialize psi1 and psi2, but if sigma and lam0 initialized too far away
 #from truth, it can stop adapting before convergence and mix very poorly.
 Niminits <- list(z=nimbuild$z,s=nimbuild$s,ID=nimbuild$ID,capcounts=rowSums(nimbuild$y.full),
                  y.full=nimbuild$y.full,y.event=nimbuild$y.event,
-                 theta.unmarked=c(0,0.5,0.5),lam0=inits$lam0,sigma=inits$sigma)
+                 theta.unmarked=c(0,0.5,0.5),lam0=inits$lam0,sigma=inits$sigma,theta.d=inits$theta.d)
 
 #constants for Nimble
 J=nrow(data$X)
-constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-                xlim=data$xlim,ylim=data$ylim)
+# constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+#                 xlim=data$xlim,ylim=data$ylim)
 
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
 z.data=c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
 
-Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-              ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
-
-# #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-# constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
-#                 xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
-#                 n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
 # Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
-#               ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
-#               locs=data$locs)
+#               ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both))
+
+#If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+                xlim=data$xlim,ylim=data$ylim,tel.inds=nimbuild$tel.inds,
+                n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
+Nimdata<-list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J,3)),
+              ID=rep(NA,nimbuild$n.samples),z=z.data,X=as.matrix(X),capcounts=rep(NA,M.both),
+              locs=data$locs)
 
 # set parameters to monitor
-parameters=c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked',
+parameters=c('psi1','psi2','lam0','sigma','theta.d','theta.marked','theta.unmarked',
               'n.M','n.UM','N.M','N.UM','N.tot')
 #other things we can monitor with separate thinning rate
 parameters2=c("ID","s")
