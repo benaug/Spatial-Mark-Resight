@@ -126,7 +126,7 @@ sim.SMR<-
         }
         IDmnoID=idx2[mnoID.idx,1]
       }else{
-        y.marked.noID=G.marked.noID=IDnoID=NA
+        y.marked.noID=IDnoID=NA
         IDmnoID=NA
       }
       if(nmunk>0){
@@ -141,11 +141,11 @@ sim.SMR<-
         IDunk=idx2[munk.idx,1]
         IDunkType=rep("marked",length(munk.idx))
       }else{
-        y.unk=G.unk=IDunk=IDunkType=NA
+        y.unk=IDunk=IDunkType=NA
       }
     }else{
-      y.marked.noID=G.marked.noID=IDmnoID=NA
-      y.unk=G.unk=IDunk=IDunkType=NA
+      y.marked.noID=IDmnoID=NA
+      y.unk=IDunk=IDunkType=NA
     }
     
     #marked status observation model for unmarked individuals
@@ -169,7 +169,7 @@ sim.SMR<-
       IDunk2=IDunkType2=NA
     }
     
-    #combine y.unk and G.sight.unk if there are members from both marked and unmarked
+    #combine y.unk if there are members from both marked and unmarked
     if(!any(is.na(IDunk))&!any(is.na(IDunk2))){
       IDunk=c(IDunk,IDunk2)
       IDunkType=c(IDunkType,IDunkType2)
@@ -239,7 +239,6 @@ sim.SMR<-
     }
     
     #disassemble y.marked
-    # G.marked.ID=matrix(NA,nrow=sum(y.marked),ncol=n.cat)
     y.marked.ID=array(0,dim=c(sum(y.marked),J,K))
     ID.marked=rep(NA,sum(y.marked))
     idx=1
