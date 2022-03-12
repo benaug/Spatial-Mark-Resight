@@ -1,10 +1,4 @@
-###################################################################
-# Custom nimbleFunctions to fit a categorical SPIM
-###################################################################
-
-#------------------------------------------------------------------
-# Function for calculation detection rate
-#------------------------------------------------------------------
+# Function to calculate detection rate, but skip when z=0
 GetDetectionRate <- nimbleFunction(
   run = function(s = double(1), lam0=double(0), sigma=double(0), 
                  X=double(2), J=double(0), z=double(0)){ 
@@ -17,7 +11,8 @@ GetDetectionRate <- nimbleFunction(
     }
   }
 )
-
+#Vectorized observation model that also prevents z from being turned off if an unmarked ind currently has samples.
+#also skips likelihood eval when z=0
 dPoissonVector <- nimbleFunction(
   run = function(x = double(1), lambda = double(1), z = double(0),
                  log = integer(0)) {
@@ -44,7 +39,7 @@ rPoissonVector <- nimbleFunction(
     return(out)
   }
 )
-
+#custom multinomial distribution to skip calcs when an ind has 0 samples (most of them!)
 dmulti2 <- nimbleFunction(
   run = function(x = double(2), size = double(1), prob = double(1), capcounts = double(0),
                  log = integer(0)) {
@@ -74,7 +69,7 @@ rmulti2 <- nimbleFunction(
     return(out)
   }
 )
-
+#calculates how many samples each individual is currently allocated.
 Getcapcounts <- nimbleFunction(
   run = function(y.full=double(2)){
     returnType(double(1))
@@ -88,9 +83,10 @@ Getcapcounts <- nimbleFunction(
   }
 )
 
-
+#calculate number of captured individuals
 Getncap <- nimbleFunction(
-  run = function(capcounts=double(1),ID=double(1)){ #don't need ID, but nimble requires is it used in a function 
+  #don't need ID, G.latent, but nimble requires them to be used in a function 
+  run = function(capcounts=double(1),ID=double(1)){
     returnType(double(0))
     M <- nimDim(capcounts)[1]
     nstate <- numeric(M, value = 0)
@@ -105,8 +101,10 @@ Getncap <- nimbleFunction(
 )
 
 #------------------------------------------------------------------
-# Customer sampler to update latent IDs, and associated arrays
+# Custom sampler to update G.true, subject to constraints in G.latent
 #------------------------------------------------------------------
+#Can update from prior when detection function parameters do not depend on G.true
+#Using MH here so that lam0 and sigma (or other parameters) can vary by G.true values
 IDSampler <- nimbleFunction(
   contains = sampler_BASE,
   setup = function(model, mvSaved, target, control) {
@@ -127,7 +125,7 @@ IDSampler <- nimbleFunction(
     y.full <- model$y.full
     y.event <- model$y.event
 
-    #precalculate log likelihoods. Can probably pull from NIMBLE somehow, but don't know how
+    #precalculate log likelihoods.
     ll.y <- matrix(0,nrow=M.both,ncol=J)
     ll.y.event <- matrix(0,nrow=M.both,ncol=J)
     for(i in 1:M.both){
@@ -245,10 +243,9 @@ IDSampler <- nimbleFunction(
         }
       }
     }
-    #put everything back into the model$stuff after updating y.sight.true, y.sight.true.event
+    #put everything back into the model$stuff
     model$y.full <<- y.full
     model$y.event <<- y.event
-    # model$capcounts <<- capcounts
     model$ID <<- ID.curr
     model.lp.proposed <- model$calculate(calcNodes) #update logprob
     copy(from = model, to = mvSaved, row = 1, nodes = calcNodes, logProb = TRUE)
