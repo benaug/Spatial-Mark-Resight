@@ -16,7 +16,8 @@
 #This sampler also handles telemetry for marked individuals in the "premarked" scenario. Don't try
 #to use telemetry with "natural" scenario. Not realistic and I'm not sure what my code will do!
 
-#y[i,j,k] ~ Poisson(lam[i,j,k])
+#p[i,j,k] = theta.d/(theta.d+lam[i,j,k])
+#y[i,j,k] ~ Negbin(lam[i,j,k],p[i,j,k])
 #y.event[i,j,k,1:3] ~ Multinomial(theta.marked[1:3],y[i,j,k]) for marked i
 #y.event[i,j,k,1:3] ~ Multinomial(theta.unmarked[1:3],y[i,j,k]) for unmarked i
 
