@@ -158,16 +158,47 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
     }
   }
   
-  D=e2dist(s, X)
-  lamd<- lam0*exp(-D*D/(2*sigma*sigma))
-  
   #identify known ID (1), known status, unknown ID (2), unknown ID and status (3)
   G.type=rep(0,n.samples)
   G.type[samp.type=="markedID"]=1
   G.type[samp.type%in%c("markednoID","unmarked")]=2
   G.type[samp.type=="unk"]=3
   n.fixed=sum(samp.type=="markedID")
-
+  
+  if(!is.null(dim(data$locs))){
+    max.locs=dim(locs)[2]
+    tel.inds=which(rowSums(is.na(locs[,,1]))<max.locs)
+    n.locs.ind=rowSums(!is.na(locs[,,1]))
+    n.locs.ind=n.locs.ind[tel.inds]
+    print("using telemetry to initialize telmetered s. Remove from data if not using in the model.")
+    #update s starts for telemetry guys
+    for(i in tel.inds){
+      if(n.locs.ind[i]>1){
+        s[i,]=colMeans(locs[i,1:n.locs.ind[i],])
+      }else{
+        s[i,]=locs[i,1,]
+      }
+      #make sure s is in state space
+      if(s[i,1]<xlim[1]){
+        s[i,1]=xlim[1]
+      }
+      if(s[i,1]>xlim[2]){
+        s[i,1]=xlim[2]
+      }
+      if(s[i,2]<ylim[1]){
+        s[i,2]=ylim[1]
+      }
+      if(s[i,2]>ylim[1]){
+        s[i,2]=ylim[2]
+      }
+    }
+  }else{
+    tel.inds=NA
+    n.locs.ind=NA
+  }
+  
+  D=e2dist(s, X)
+  lamd<- lam0*exp(-D*D/(2*sigma*sigma))
   #make 3D y.true
   y.true3D=array(0,dim=c(M.both,J,3))
   for(l in 1:n.samples){
@@ -190,16 +221,6 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
   }
   
   if(!is.finite(sum(ll.y)))stop("Starting observation model likelihood not finite. Possible error in K1D (if supplied by user) or problem initializing data.")
-  
-  if(!is.null(dim(data$locs))){
-    max.locs=dim(locs)[2]
-    tel.inds=which(rowSums(is.na(locs[,,1]))<max.locs)
-    n.locs.ind=rowSums(!is.na(locs[,,1]))
-    n.locs.ind=n.locs.ind[tel.inds]
-  }else{
-    tel.inds=NA
-    n.locs.ind=NA
-  }
   
   return(list(s=s,z=z,ID=ID,y.full=y.true2D,y.event=y.true3D,K1D=K1D,
          n.samples=n.samples,n.fixed=n.fixed,samp.type=G.type,this.j=this.j,match=match,
