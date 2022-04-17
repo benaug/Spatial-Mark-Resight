@@ -188,7 +188,7 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
       if(s[i,2]<ylim[1]){
         s[i,2]=ylim[1]
       }
-      if(s[i,2]>ylim[1]){
+      if(s[i,2]>ylim[2]){
         s[i,2]=ylim[2]
       }
     }
