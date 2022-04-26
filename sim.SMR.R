@@ -280,10 +280,19 @@ sim.SMR<-
                 rep("markednoID",n.samp2),
                 rep("unmarked",n.samp3),
                 rep("unk",n.samp4))
-    ID=c(ID.marked,IDmnoID,IDum,IDunk)
+    ID=ID.marked
+    if(n.samp2>0){
+      ID=c(ID,ID.mnoID)
+    }
+    if(n.samp3>0){
+      ID=c(ID,IDum)
+    }
+    if(n.samp4>0){
+      ID=c(ID,IDunk)
+    }
     n.M=sum(rowSums(y[1:n.marked,,])>0)
     n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
-
+    
     out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=ID.marked, #observed data
               n.marked=n.marked,locs=locs,n.M=n.M,n.UM=n.UM,
               y=y,s=s, ID=ID,#true data
