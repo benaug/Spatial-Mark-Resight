@@ -227,7 +227,7 @@ sim.SMR<-
         useUnk=TRUE
     }else{
       y.unk=array(0,dim=c(0,J,K))
-      ID.unk=c()
+      IDunk=c()
     }
     #Are there marked no ID guys?
     useMarkednoID=FALSE
@@ -235,12 +235,12 @@ sim.SMR<-
       useMarkednoID=TRUE
     }else{
       y.marked.noID=array(0,dim=c(0,J,K))
-      ID.mnoID=c()
+      IDmnoID=c()
     }
     
     #disassemble y.marked
     y.marked.ID=array(0,dim=c(sum(y.marked),J,K))
-    ID.marked=rep(NA,sum(y.marked))
+    IDmarked=rep(NA,sum(y.marked))
     idx=1
     for(i in 1:n.marked){
       for(j in 1:J){
@@ -248,7 +248,7 @@ sim.SMR<-
           if(y.marked[i,j,k]>0){
             for(l in 1:y.marked[i,j,k]){
               y.marked.ID[idx,j,k]=1
-              ID.marked[idx]=i
+              IDmarked[idx]=i
               idx=idx+1
             }
           }
@@ -280,9 +280,9 @@ sim.SMR<-
                 rep("markednoID",n.samp2),
                 rep("unmarked",n.samp3),
                 rep("unk",n.samp4))
-    ID=ID.marked
+    ID=IDmarked
     if(n.samp2>0){
-      ID=c(ID,ID.mnoID)
+      ID=c(ID,IDmnoID)
     }
     if(n.samp3>0){
       ID=c(ID,IDum)
@@ -293,7 +293,7 @@ sim.SMR<-
     n.M=sum(rowSums(y[1:n.marked,,])>0)
     n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
     
-    out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=ID.marked, #observed data
+    out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=IDmarked, #observed data
               n.marked=n.marked,locs=locs,n.M=n.M,n.UM=n.UM,
               y=y,s=s, ID=ID,#true data
               X=X,K=K,K1D=K1D,buff=buff,xlim=xlim,ylim=ylim)
