@@ -106,7 +106,7 @@ Niminits <- list(N=N.init,N.UM=N.UM.init,
 
 #constants for Nimble
 J=unlist(lapply(data$X,nrow))
-constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
+constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
                 xlim=data$xlim,ylim=data$ylim,area=area)
 
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
@@ -119,7 +119,7 @@ Nimdata<-list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array
               ID=matrix(NA,N.session,max(nimbuild$n.samples)),z=z.data,X=nimbuild$X,capcounts=matrix(NA,N.session,max(M.both)))
 
 # #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-# constants<-list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
+# constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
 #                 xlim=data$xlim,ylim=data$ylim,area=area,
 #                 #telemetry stuff
 #                 tel.inds=nimbuild$tel.inds,
