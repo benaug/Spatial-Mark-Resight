@@ -100,7 +100,7 @@ Getncap <- nimbleFunction(
 )
 
 #------------------------------------------------------------------
-# Customer sampler to update latent IDs and y.full
+# Customer sampler to update latent IDs, y.full, and y.event
 #------------------------------------------------------------------
 IDSampler <- nimbleFunction(
   contains = sampler_BASE,
