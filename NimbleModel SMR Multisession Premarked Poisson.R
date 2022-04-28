@@ -2,7 +2,7 @@ NimModel <- nimbleCode({
   #detection function priors - shared across sessions
   lam0.fixed~dunif(0,15)
   sigma.fixed~dunif(0,10)
-  #Expected density/data augmentation priors for marked + unmarked individuals
+  #Expected density for marked + unmarked individuals
   D ~ dunif(0,10) #Expected density
   for(g in 1:N.session){
     #plug in shared df parameter for each session. Must use lam0[g] and sigma[g] here for custom update.
@@ -14,6 +14,8 @@ NimModel <- nimbleCode({
     N.UM[g] <- N[g] - M1[g]
     
     #sample type observation model priors (Dirichlet)
+    #If sharing across sessions, model as fixed above and plug theta.marked and theta.unmarked
+    #into g indices here
     alpha.marked[g,1] <- 1
     alpha.marked[g,2] <- 1
     alpha.marked[g,3] <- 1
