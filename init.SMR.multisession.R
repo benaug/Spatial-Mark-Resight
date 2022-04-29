@@ -8,18 +8,18 @@ init.SMR.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",ob
   N.session=nrow(data$this.j)
   n.samples=rowSums(!is.na(data$this.j))
   init.session=vector("list",N.session)
+  
+  #split inits by session
+  inits.use=vector("list",N.session)
+  parms=names(inits)
   for(g in 1:N.session){
-    #split inits by session
-    inits.use=vector("list",N.session)
-    parms=names(inits)
-    for(g in 1:N.session){
-      inits.use[[g]]=vector("list",length(parms))
-      names(inits.use[[g]])=parms
-      for(i in 1:length(parms)){
-        inits.use[[g]][[i]]=inits[[i]][g]
-      }
+    inits.use[[g]]=vector("list",length(parms))
+    names(inits.use[[g]])=parms
+    for(i in 1:length(parms)){
+      inits.use[[g]][[i]]=inits[[i]][g]
     }
   }
+  
   #initialize sessions one by one
   for(g in 1:N.session){
     if(all(is.na(data$locs))){
