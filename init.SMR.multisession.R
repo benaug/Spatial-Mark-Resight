@@ -21,12 +21,16 @@ init.SMR.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",ob
   }
   
   #initialize sessions one by one
+  anyTelemetry=FALSE
   for(g in 1:N.session){
     if(all(is.na(data$locs))){
+      locs.use=NA
+    }else if(all(is.na((data$locs[g,,,])))){
       locs.use=NA
     }else{
       tlocs.sess.max=max(rowSums(!is.na(data$locs[g,1:M1[g],,1])))
       locs.use=data$locs[g,1:M1[g],1:tlocs.sess.max,1:2]
+      anyTelemetry=TRUE
     }
     data.use=list(this.j=data$this.j[g,1:n.samples[g]],this.k=data$this.k[g,1:n.samples[g]],samp.type=data$samp.type[g,1:n.samples[g]],
                   ID.marked=data$ID.marked[[g]],n.marked=data$n.marked[g],locs=locs.use,X=data$X[[g]],buff=data$buff[g],
@@ -45,7 +49,7 @@ init.SMR.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",ob
   n.fixed=rep(NA,N.session)
   samp.type=matrix(NA,N.session,max(n.samples))
   match=array(NA,dim=c(N.session,max(n.samples),maxM.both))
-  if(!all(is.na(data$locs))){
+  if(anyTelemetry){
     tel.inds=matrix(NA,N.session,dim(data$locs)[2],dim(data$locs)[3])
     n.locs.ind=matrix(NA,N.session,dim(data$locs)[2],dim(data$locs)[3])
     n.tel.inds=rep(NA,N.session)
@@ -63,7 +67,7 @@ init.SMR.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",ob
     samp.type[g,1:n.samples[g]]=init.session[[g]]$samp.type
     match[g,1:n.samples[g],1:M.both[g]]=init.session[[g]]$match
     n.fixed[g]=init.session[[g]]$n.fixed
-    if(!all(is.na(data$locs))){
+    if(anyTelemetry){
       n.tel.inds[g]=sum(rowSums(!is.na(data$locs[g,,,1]))>0)
       tel.inds[g,1:n.tel.inds[g]]=init.session[[g]]$tel.inds
       n.locs.ind[g,1:n.tel.inds[g]]=init.session[[g]]$n.locs.ind
@@ -74,7 +78,6 @@ init.SMR.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",ob
   for(g in 1:N.session){
     X.new[g,1:J[g],]=data$X[[g]]
   }
-
 
   return(list(s=s,z=z,ID=ID,y.full=y.full,y.event=y.event,K1D=K1D,J=J,X=X.new,
          n.samples=n.samples,n.fixed=n.fixed,samp.type=samp.type,this.j=data$this.j,match=match,

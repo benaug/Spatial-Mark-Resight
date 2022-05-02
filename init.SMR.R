@@ -169,7 +169,6 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
     max.locs=dim(locs)[2]
     tel.inds=which(rowSums(is.na(locs[,,1]))<max.locs)
     n.locs.ind=rowSums(!is.na(locs[,,1]))
-    n.locs.ind=n.locs.ind[tel.inds]
     print("using telemetry to initialize telmetered s. Remove from data if not using in the model.")
     #update s starts for telemetry guys
     for(i in tel.inds){
@@ -192,6 +191,7 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
         s[i,2]=ylim[2]
       }
     }
+    n.locs.ind=n.locs.ind[tel.inds]
   }else{
     tel.inds=NA
     n.locs.ind=NA

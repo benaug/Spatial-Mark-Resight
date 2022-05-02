@@ -113,8 +113,8 @@ Niminits <- list(N=N.init,N.UM=N.UM.init,
 
 #constants for Nimble
 J=unlist(lapply(data$X,nrow))
-constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
-                xlim=data$xlim,ylim=data$ylim,area=area)
+# constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
+#                 xlim=data$xlim,ylim=data$ylim,area=area)
 
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
 z.data=matrix(NA,N.session,max(M.both))
@@ -122,18 +122,18 @@ for(g in 1:N.session){
   z.data[g,1:data$n.marked[g]]=1
 }
 
-Nimdata<-list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array(NA,c(N.session,max(M.both),max(J),3)),
-              ID=matrix(NA,N.session,max(nimbuild$n.samples)),z=z.data,X=nimbuild$X,capcounts=matrix(NA,N.session,max(M.both)))
-
-# #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-# constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
-#                 xlim=data$xlim,ylim=data$ylim,area=area,
-#                 #telemetry stuff
-#                 tel.inds=nimbuild$tel.inds,
-#                 n.tel.inds=nimbuild$n.tel.inds,n.locs.ind=nimbuild$n.locs.ind)
 # Nimdata<-list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array(NA,c(N.session,max(M.both),max(J),3)),
-#               ID=matrix(NA,N.session,max(nimbuild$n.samples)),z=z.data,X=nimbuild$X,capcounts=matrix(NA,N.session,max(M.both)),
-#               locs=data$locs)
+#               ID=matrix(NA,N.session,max(nimbuild$n.samples)),z=z.data,X=nimbuild$X,capcounts=matrix(NA,N.session,max(M.both)))
+
+#If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
+                xlim=data$xlim,ylim=data$ylim,area=area,
+                #telemetry stuff
+                tel.inds=nimbuild$tel.inds,
+                n.tel.inds=nimbuild$n.tel.inds,n.locs.ind=nimbuild$n.locs.ind)
+Nimdata<-list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array(NA,c(N.session,max(M.both),max(J),3)),
+              ID=matrix(NA,N.session,max(nimbuild$n.samples)),z=z.data,X=nimbuild$X,capcounts=matrix(NA,N.session,max(M.both)),
+              locs=data$locs)
 
 # set parameters to monitor
 parameters=c('lambda','lam0.fixed','sigma.fixed','theta.d.fixed','theta.marked','theta.unmarked',
