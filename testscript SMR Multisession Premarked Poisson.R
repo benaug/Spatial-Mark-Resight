@@ -6,9 +6,6 @@
 
 #See single session test script for more notes on basic SMR model structure
 
-
-#data initializer doesn't handle telemetry in some sessions but not others...
-
 library(nimble)
 source("sim.SMR.multisession.R")
 source("sim.SMR.R") #used by multisession simulator
