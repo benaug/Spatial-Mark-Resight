@@ -73,6 +73,14 @@ init.SMR.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",ob
       n.locs.ind[g,1:n.tel.inds[g]]=init.session[[g]]$n.locs.ind
     }
   }
+  
+  #remove unused telemetry dimensions if not all marked individuals telemetered
+  rem.idx=which(colSums(is.na(n.locs.ind))==N.session)
+  if(length(rem.idx)>0){
+    n.locs.ind=n.locs.ind[,-rem.idx]
+    tel.inds=tel.inds[,-rem.idx]
+  }
+  
   #put X in ragged array
   X.new=array(NA,dim=c(N.session,max(J),2))
   for(g in 1:N.session){
