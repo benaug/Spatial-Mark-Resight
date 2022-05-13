@@ -49,8 +49,8 @@ NimModel <- nimbleCode({
     # #If you have telemetry
     # for(i in 1:n.tel.inds[g]){
     #   for(m in 1:n.locs.ind[g,i]){
-    #     locs[g,tel.inds[g,i],m,1]~dnorm(s[g,tel.inds[g,i],1],sd=sigma[g,tel.inds[g,i]])
-    #     locs[g,tel.inds[g,i],m,2]~dnorm(s[g,tel.inds[g,i],2],sd=sigma[g,tel.inds[g,i]])
+    #     locs[g,tel.inds[g,i],m,1]~dnorm(s[g,tel.inds[g,i],1],sd=sigma[g])
+    #     locs[g,tel.inds[g,i],m,2]~dnorm(s[g,tel.inds[g,i],2],sd=sigma[g])
     #   }
     # }
     
