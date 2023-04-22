@@ -166,7 +166,7 @@ for(g in 1:N.session){
                   silent = TRUE)
 }
 
-z.ups=round(M*0.25) # how many z proposals per iteration per session?
+z.ups=round(M.both*0.25) # how many z proposals per iteration per session?
 J=nimbuild$J
 conf$removeSampler("N")
 for(g in 1:N.session){
