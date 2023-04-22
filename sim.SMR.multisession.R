@@ -44,6 +44,7 @@ sim.SMR.multisession <-
     #realized N
     N=rpois(N.session,lambda)
     if(any(N==0))stop("At least one session N simulated to be 0")
+    if(any(N<n.marked))stop("At least one session N simulated to be less than n.marked")
     
     library(abind)
     xlim=ylim=matrix(NA,N.session,2)

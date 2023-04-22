@@ -78,18 +78,6 @@ sim.SMR<-
     IDmarked=1:n.marked
     umguys=setdiff(1:N,IDmarked)
     
-    
-    if(length(dim(y))==2){
-      a=1
-      browser()
-    }
-    
-    
-    if(dim(y)[1]<length(IDmarked)){
-      a=2
-      browser()
-    }
-    
     #split sightings into marked and unmarked histories, considering occasion of marking
     y.marked=y[IDmarked,,]
     if(length(IDmarked)==1){ #if only one marked guy, make y.marked an array again
