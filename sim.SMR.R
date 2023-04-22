@@ -59,6 +59,8 @@ sim.SMR<-
     }else{
       stop("obstype not recognized")
     }
+    
+    if(sum(y)==0)stop("No individuals captured. Reconsider parameter settings.")
 
     if(marktype=="natural"){
       #reorder data so enough marked guys are at the top
@@ -76,6 +78,18 @@ sim.SMR<-
     IDmarked=1:n.marked
     umguys=setdiff(1:N,IDmarked)
     
+    
+    if(length(dim(y))==2){
+      a=1
+      browser()
+    }
+    
+    
+    if(dim(y)[1]<length(IDmarked)){
+      a=2
+      browser()
+    }
+    
     #split sightings into marked and unmarked histories, considering occasion of marking
     y.marked=y[IDmarked,,]
     if(length(IDmarked)==1){ #if only one marked guy, make y.marked an array again
@@ -84,11 +98,12 @@ sim.SMR<-
     n.samples=sum(y[umguys,,])
     y.unmarked=array(0,dim=c(n.samples,J,K))
     IDum=rep(NA,n.samples)
-    idx=1
-    for(i in 1:length(umguys)){
-      for(j in 1:J){ #then traps
-        for(k in 1:K){ #then occasions
-          if(y[umguys[i],j,k]>0){ #is there at least one sample here?
+    if(n.samples>0){
+      idx=1
+      for(i in 1:length(umguys)){
+        for(j in 1:J){ #then traps
+          for(k in 1:K){ #then occasions
+            if(y[umguys[i],j,k]>0){ #is there at least one sample here?
               for(l in 1:y[umguys[i],j,k]){ #then samples
                 y.unmarked[idx,j,k]=1
                 IDum[idx]=umguys[i]
@@ -97,6 +112,7 @@ sim.SMR<-
             }
           }
         }
+      }
     }
    
     #ID/marked status observation model for marked individuals
@@ -160,10 +176,16 @@ sim.SMR<-
       if(nunk>0){
         #extract um history to unk
         y.unk2=y.unmarked[unk.idx,,]
+        if(nunk==1){ #reformat to array
+          y.unk2=array(y.unk2,dim=c(1,J,K))
+        }
         IDunk2=IDum[unk.idx]
         IDunkType2=rep("unmarked",length(IDunk2))
         #remove unk from um history
         y.unmarked=y.unmarked[-unk.idx,,]
+        if(length(dim(y.unmarked))==2){ #reformat to array
+          y.unmarked=array(y.unmarked,dim=c(1,J,K))
+        }
         IDum=IDum[-unk.idx]
       }else{
         IDunk2=IDunkType2=NA
@@ -299,7 +321,11 @@ sim.SMR<-
       ID=c(ID,IDunk)
     }
     n.M=sum(rowSums(y[1:n.marked,,])>0)
-    n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
+    if(n.marked<N){
+      n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
+    }else{
+      n.UM=0
+    }
     
     out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=IDmarked, #observed data
               n.marked=n.marked,locs=locs,n.M=n.M,n.UM=n.UM,
