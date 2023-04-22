@@ -106,7 +106,9 @@ sim.SMR.multisession <-
       n.UM[g]=data[[g]]$n.UM
       y[[g]]=data[[g]]$y
       s[[g]]=data[[g]]$s
-      ID.marked[[g]]=data[[g]]$ID.marked
+      if(!is.null(data[[g]]$ID.marked)){
+        ID.marked[[g]]=data[[g]]$ID.marked
+      }
     }
     
     if(any(tlocs>0)){
