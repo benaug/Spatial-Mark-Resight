@@ -11,6 +11,8 @@
 
 #data initializer doesn't handle telemetry in some sessions but not others...
 
+#Nimble sampler won't work as is if only 1 marked individual, can be fixed, email Ben
+
 library(nimble)
 source("sim.SMR.multisession.R")
 source("sim.SMR.R") #used by multisession simulator

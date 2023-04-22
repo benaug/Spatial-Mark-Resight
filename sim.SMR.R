@@ -78,6 +78,9 @@ sim.SMR<-
     
     #split sightings into marked and unmarked histories, considering occasion of marking
     y.marked=y[IDmarked,,]
+    if(length(IDmarked)==1){ #if only one marked guy, make y.marked an array again
+      y.marked=array(y.marked,dim=c(1,J,K))
+    }
     n.samples=sum(y[umguys,,])
     y.unmarked=array(0,dim=c(n.samples,J,K))
     IDum=rep(NA,n.samples)

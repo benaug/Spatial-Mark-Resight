@@ -6,6 +6,8 @@
 
 #See single session test script for more notes on basic SMR model structure
 
+#Nimble sampler won't work as is if only 1 marked individual, can be fixed, email Ben
+
 library(nimble)
 source("sim.SMR.multisession.R")
 source("sim.SMR.R") #used by multisession simulator
@@ -23,17 +25,18 @@ nimbleOptions(determinePredictiveNodesInModel = FALSE)
 ####Simulate some data####
 #Here, I'll simulate 3 populations with different n.marked, K, X, and state space areas
 #sharing D, lam0, sigma so they can be shared during estimation
-N.session=2
-D = rep(0.05,N.session) #expected density in units of sigma and X
-n.marked=c(5,5)
-lam0=rep(0.005,N.session)
-sigma=rep(2,N.session)
-K=c(30,30) #number of occasions
-buff=rep(6,N.session) #state space buffer
+N.session=3
+D = rep(0.4,N.session) #expected density in units of sigma and X
+n.marked=c(12,13,14)
+lam0=rep(0.5,N.session)
+sigma=rep(0.5,N.session)
+K=c(5,6,7) #number of occasions
+buff=rep(2,N.session) #state space buffer
 #make trapping arrays
 X1=expand.grid(3:11,3:11)
 X2=expand.grid(3:12,3:12)
-X=list(X1,X2) #put in a list, one for each session
+X3=expand.grid(3:13,3:13)
+X=list(X1,X2,X3) #put in a list, one for each session
 
 #See what expected N is for these expected D and state space areas
 area=getArea(X=X,buff=buff)
@@ -42,11 +45,11 @@ lambda=D*area
 lambda #expected N in each session
 
 #theta is probability of observing each sample type for marked and unmarked individuals
-theta.marked=matrix(rep(c(1,0,0),N.session),nrow=N.session,byrow=TRUE) #P(ID, Marked no ID, unk status). must sum to 1
-theta.unmarked=rep(1,N.session) #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
+theta.marked=matrix(rep(c(0.75,0.15,0.1),N.session),nrow=N.session,byrow=TRUE) #P(ID, Marked no ID, unk status). must sum to 1
+theta.unmarked=rep(0.75,N.session) #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
 marktype="premarked" #are individuals premarked, or naturally marked? This test script only handles premarked.
 obstype="poisson"
-tlocs=c(0,0) #number of telemetry locs/marked individual in each session. For "premarked"
+tlocs=c(0,0,0) #number of telemetry locs/marked individual in each session. For "premarked"
 data=sim.SMR.multisession(N.session=N.session,lambda=lambda,n.marked=n.marked,marktype=marktype,
              theta.marked=theta.marked,theta.unmarked=theta.unmarked,
              lam0=lam0,sigma=sigma,K=K,X=X,buff=buff,tlocs=tlocs,
@@ -68,7 +71,7 @@ if(marktype=="natural"){
 }else{
   M1=n.marked #Set to n.marked if premarked.
 }
-M2=c(115,125) #Augmentation level for unmarked
+M2=c(115,125,135) #Augmentation level for unmarked
 #Monitor N.M and N.UM, marked and unmarked ind abundance to make sure N.M does not hit M1
 #and N.UM does not hit M1+M2 during sampling. If so, raise the offending M and run again.
 M.both=M1+M2
