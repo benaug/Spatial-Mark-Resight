@@ -243,20 +243,24 @@ sim.SMR<-
     
     #disassemble y.marked
     y.marked.ID=array(0,dim=c(sum(y.marked),J,K))
-    IDmarked=rep(NA,sum(y.marked))
-    idx=1
-    for(i in 1:n.marked){
-      for(j in 1:J){
-        for(k in 1:K){
-          if(y.marked[i,j,k]>0){
-            for(l in 1:y.marked[i,j,k]){
-              y.marked.ID[idx,j,k]=1
-              IDmarked[idx]=i
-              idx=idx+1
+    if(sum(y.marked)>0){
+      IDmarked=rep(NA,sum(y.marked))
+      idx=1
+      for(i in 1:n.marked){
+        for(j in 1:J){
+          for(k in 1:K){
+            if(y.marked[i,j,k]>0){
+              for(l in 1:y.marked[i,j,k]){
+                y.marked.ID[idx,j,k]=1
+                IDmarked[idx]=i
+                idx=idx+1
+              }
             }
           }
         }
       }
+    }else{
+      IDmarked=c()
     }
     
     n.samp1=nrow(y.marked.ID) #1

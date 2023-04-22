@@ -44,14 +44,20 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
   
   #build y.marked
   y.marked=matrix(0,M1,J)
-  for(l in 1:length(ID.marked)){
-    y.marked[ID.marked[l],this.j[l]]=y.marked[ID.marked[l],this.j[l]]+1
+  if(length(ID.marked)>0){ #are there marked guy captures?
+    for(l in 1:length(ID.marked)){
+      y.marked[ID.marked[l],this.j[l]]=y.marked[ID.marked[l],this.j[l]]+1
+    }
   }
   
   #initialize unknown IDs
   G.true=matrix(c(rep(1,M1),rep(2,M2)),ncol=1) #individual marked and unmarked statuses
   ID=c(ID.marked,rep(NA,n.samples-length(ID.marked)))
-  nextID=max(ID,na.rm=TRUE)+1
+  if(length(ID.marked)>0){
+    nextID=max(ID,na.rm=TRUE)+1
+  }else{
+    nextID=1
+  }
   
   y.true2D=apply(y.marked,c(1,2),sum)
   y.true2D=rbind(y.true2D,matrix(0,nrow=M2,ncol=J))
