@@ -100,7 +100,8 @@ sim.SMR<-
     }
    
     #ID/marked status observation model for marked individuals
-    if(theta.marked[1]!=0&sum(y.marked)>0){#bug fix from Glenn Stauffer
+    # if(theta.marked[1]!=0&sum(y.marked)>0){#bug fix from Glenn Stauffer
+    if(sum(y.marked)>0){#bug fix from Glenn Stauffer. BA change 4/22/23. 
       idx1=which(y.marked>0)#used to extract counts
       count=y.marked[idx1]
       idx2=which(y.marked>0,arr.ind=TRUE)#used to move counts
