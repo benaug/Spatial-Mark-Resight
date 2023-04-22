@@ -41,6 +41,10 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
   if(n.samp4>0){
     useUnk=TRUE
   }
+  useUnmarked=FALSE
+  if(n.samp3>0){
+    useUnmarked=TRUE
+  }
   
   #build y.marked
   y.marked=matrix(0,M1,J)
@@ -101,19 +105,21 @@ init.SMR=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisso
   }
   #unmarked next...
   nextID=M1+1
-  matches=(M1+1):M.both
-  for(l in (n.samp1+n.samp2+1):(n.samp1+n.samp2+n.samp3)){
-    #can you match an unmarked guy in same trap already assigned an ID?
-    sametrap=y.true2D[matches,this.j[l]]>0
-    if(any(sametrap)){
-      ID[l]=matches[which(sametrap)[1]]
-      y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
-    }else{#must be new ID
-      ID[l]=nextID
-      y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
-      nextID=nextID+1
+  if(useUnmarked){
+    matches=(M1+1):M.both
+    for(l in (n.samp1+n.samp2+1):(n.samp1+n.samp2+n.samp3)){
+      #can you match an unmarked guy in same trap already assigned an ID?
+      sametrap=y.true2D[matches,this.j[l]]>0
+      if(any(sametrap)){
+        ID[l]=matches[which(sametrap)[1]]
+        y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
+      }else{#must be new ID
+        ID[l]=nextID
+        y.true2D[ID[l],this.j[l]]=y.true2D[ID[l],this.j[l]]+1
+        nextID=nextID+1
+      }
+      if(nextID>M.both)stop("Need to raise M2 to initialize data.")
     }
-    if(nextID>M.both)stop("Need to raise M2 to initialize data.")
   }
   #then unknown...
   #keeping nextID where it is so we assign non matches to unmarked class
