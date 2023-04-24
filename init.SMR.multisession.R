@@ -28,7 +28,11 @@ init.SMR.multisession=function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",ob
     }else if(all(is.na((data$locs[g,,,])))){
       locs.use=NA
     }else{
-      tlocs.sess.max=max(rowSums(!is.na(data$locs[g,1:M1[g],,1])))
+      if(M1[g]>1){
+        tlocs.sess.max=max(rowSums(!is.na(data$locs[g,1:M1[g],,1])))
+      }else{
+        tlocs.sess.max=sum(!is.na(data$locs[g,1:M1[g],,1]))
+      }
       locs.use=data$locs[g,1:M1[g],1:tlocs.sess.max,1:2]
       anyTelemetry=TRUE
     }
