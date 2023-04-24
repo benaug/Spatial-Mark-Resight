@@ -287,52 +287,54 @@ zSampler <- nimbleFunction(
         #find all z's currently on *excluding marked individuals*
         z.on=which(model$z[g,(M1+1):M.both]==1)+M1
         n.z.on=length(z.on)
-        pick=rcat(1,rep(1/n.z.on,n.z.on)) #select one of these individuals
-        pick=z.on[pick]
-        
-        #prereject turning off unmarked individuals currently allocated samples
-        if(model$capcounts[g,pick]>0){#is this an unmarked individual with samples?
-          reject=TRUE
-        }
-        if(!reject){
-          #get initial logprobs for N and y
-          lp.initial.N <- model$getLogProb(N.node)
-          lp.initial.y <- model$getLogProb(y.nodes[pick])
-
-          #propose new N/z
-          model$N[g] <<-  model$N[g] - 1
-          model$z[g,pick] <<- 0
-
-          #turn lam off
-          model$calculate(lam.nodes[pick])
-          model$calculate(p.nodes[pick])
-
-          #get proposed logprobs for N and y
-          lp.proposed.N <- model$calculate(N.node)
-          lp.proposed.y <- model$calculate(y.nodes[pick]) #will always be 0
-
-          #MH step
-          log_MH_ratio <- (lp.proposed.N + lp.proposed.y) - (lp.initial.N + lp.initial.y)
-          accept <- decide(log_MH_ratio)
-
-          if(accept) {
-            mvSaved["N",1][g] <<- model[["N"]][g]
-            model[["N.UM"]][g] <<- model[["N.UM"]][g] - 1 #update N.UM, derived parameter
-            mvSaved["N.UM",1][g] <<- mvSaved["N.UM",1][g] - 1 #update N.UM, derived parameter
-            for(j in 1:J){
-              mvSaved["lam",1][g,pick,j] <<- model[["lam"]][g,pick,j]
-              mvSaved["p",1][g,pick,j] <<- model[["p"]][g,pick,j]
+        if(n.z.on>0){ #skip if no unmarked z's to turn off, otherwise nimble will crash
+          pick=rcat(1,rep(1/n.z.on,n.z.on)) #select one of these individuals
+          pick=z.on[pick]
+          
+          #prereject turning off unmarked individuals currently allocated samples
+          if(model$capcounts[g,pick]>0){#is this an unmarked individual with samples?
+            reject=TRUE
+          }
+          if(!reject){
+            #get initial logprobs for N and y
+            lp.initial.N <- model$getLogProb(N.node)
+            lp.initial.y <- model$getLogProb(y.nodes[pick])
+            
+            #propose new N/z
+            model$N[g] <<-  model$N[g] - 1
+            model$z[g,pick] <<- 0
+            
+            #turn lam off
+            model$calculate(lam.nodes[pick])
+            model$calculate(p.nodes[pick])
+            
+            #get proposed logprobs for N and y
+            lp.proposed.N <- model$calculate(N.node)
+            lp.proposed.y <- model$calculate(y.nodes[pick]) #will always be 0
+            
+            #MH step
+            log_MH_ratio <- (lp.proposed.N + lp.proposed.y) - (lp.initial.N + lp.initial.y)
+            accept <- decide(log_MH_ratio)
+            
+            if(accept) {
+              mvSaved["N",1][g] <<- model[["N"]][g]
+              model[["N.UM"]][g] <<- model[["N.UM"]][g] - 1 #update N.UM, derived parameter
+              mvSaved["N.UM",1][g] <<- mvSaved["N.UM",1][g] - 1 #update N.UM, derived parameter
+              for(j in 1:J){
+                mvSaved["lam",1][g,pick,j] <<- model[["lam"]][g,pick,j]
+                mvSaved["p",1][g,pick,j] <<- model[["p"]][g,pick,j]
+              }
+              mvSaved["z",1][g,pick] <<- model[["z"]][g,pick]
+            }else{
+              model[["N"]][g] <<- mvSaved["N",1][g]
+              for(j in 1:J){
+                model[["lam"]][g,pick,j] <<- mvSaved["lam",1][g,pick,j]
+                model[["p"]][g,pick,j] <<- mvSaved["p",1][g,pick,j]
+              }
+              model[["z"]][g,pick] <<- mvSaved["z",1][g,pick]
+              model$calculate(y.nodes[pick])
+              model$calculate(N.node)
             }
-            mvSaved["z",1][g,pick] <<- model[["z"]][g,pick]
-          }else{
-            model[["N"]][g] <<- mvSaved["N",1][g]
-            for(j in 1:J){
-              model[["lam"]][g,pick,j] <<- mvSaved["lam",1][g,pick,j]
-              model[["p"]][g,pick,j] <<- mvSaved["p",1][g,pick,j]
-            }
-            model[["z"]][g,pick] <<- mvSaved["z",1][g,pick]
-            model$calculate(y.nodes[pick])
-            model$calculate(N.node)
           }
         }
       }else{#add
