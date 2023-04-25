@@ -308,7 +308,15 @@ sim.SMR<-
     if(n.samp4>0){
       ID=c(ID,IDunk)
     }
-    n.M=sum(rowSums(y[1:n.marked,,])>0)
+    if(n.marked>1){
+      n.M=sum(rowSums(y[1:n.marked,,])>0)
+    }else{
+      if(sum(y[1,,])>0){
+        n.M=1
+      }else{
+        n.M=0
+      }
+    }
     if(n.marked<N){
       n.UM=sum(rowSums(y[(n.marked+1):N,,])>0)
     }else{
