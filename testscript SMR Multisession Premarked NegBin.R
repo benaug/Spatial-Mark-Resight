@@ -1,5 +1,5 @@
 #Multisession SMR using an alternative approach to data augmentation
-#For premarked individuals only. I will write a slightly modified sampler for natural marks.
+#For premarked individuals only. There is another one for natural marks.
 
 #This testscript shows how to share lam0, sigma, theta.d, and/or expected density across sessions
 #can share theta.marked and theta.unmarked but not done here.
@@ -148,8 +148,13 @@ parameters2=c("ID","s")
 start.time<-Sys.time()
 Rmodel <- nimbleModel(code=NimModel, constants=constants, data=Nimdata,check=FALSE,
                       inits=Niminits)
+#much faster if we don't let nimble configure y and y.event nodes
+#if you change the model file, make sure you make necessary changes here
+config.nodes <- c('lam0.fixed','sigma.fixed','theta.d.fixed',
+                  'theta.marked',paste("theta.unmarked[1:",N.session,",2:3","]"),"D")
 conf <- configureMCMC(Rmodel,monitors=parameters, thin=1,
                       monitors2=parameters2, thin2=10,
+                      nodes=config.nodes,
                       useConjugacy = TRUE)
 
 ###Two *required* sampler replacement
