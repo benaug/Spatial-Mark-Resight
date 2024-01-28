@@ -278,7 +278,7 @@ zSampler <- nimbleFunction(
   },
   run = function() {
     ###1)  Do marked individuals first###
-    for(up in 1:z.ups){ #how many updates per iteration?
+    for(up in 1:z.ups[1]){ #how many updates per iteration?
       #propose to add/subtract 1
       updown=rbinom(1,1,0.5) #p=0.5 is symmetric. If you change this, must account for asymmetric proposal
       if(updown==0){#subtract
@@ -385,7 +385,7 @@ zSampler <- nimbleFunction(
       }
     }
     ###2)  Do unmarked individuals second###
-    for(up in 1:z.ups){ #how many updates per iteration?
+    for(up in 1:z.ups[2]){ #how many updates per iteration?
       #propose to add/subtract 1
       updown=rbinom(1,1,0.5) #p=0.5 is symmetric. If you change this, must account for asymmetric proposal
       if(updown==0){#subtract

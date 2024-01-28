@@ -155,7 +155,8 @@ for(g in 1:N.session){
                   silent = TRUE)
 }
 
-z.ups <- round(M.both*0.25)# how many z proposals per iteration per session?
+# how many z proposals per iteration per session for marked, unmarked?
+z.ups <- rbind(round(M1*0.25),round(M2*0.25)) #doing 25% of M1 and M2 here
 J <- nimbuild$J
 # conf$removeSampler("N.M")
 # conf$removeSampler("N.UM")
@@ -169,7 +170,7 @@ for(g in 1:N.session){
   calcNodes <- c(N.M.node,N.UM.node,y.nodes,lam.nodes)
 
   conf$addSampler(target = paste("N.UM[",g,"]"),
-                  type = 'zSampler',control = list(z.ups=z.ups[g],J=J[g],M1=M1[g],M.both=M.both[g],g=g,
+                  type = 'zSampler',control = list(z.ups=z.ups[1:2,g],J=J[g],M1=M1[g],M.both=M.both[g],g=g,
                                                    y.nodes=y.nodes,lam.nodes=lam.nodes,N.M.node=N.M.node,
                                                    N.UM.node=N.UM.node,z.nodes=z.nodes,
                                                    calcNodes=calcNodes),
@@ -208,7 +209,7 @@ Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
 
 # Run the model.
 start.time2 <- Sys.time()
-Cmcmc$run(2500,reset=FALSE) #short run for demonstration. can keep running this line to get more samples
+Cmcmc$run(250,reset=FALSE) #short run for demonstration. can keep running this line to get more samples
 end.time <- Sys.time()
 end.time-start.time  # total time for compilation, replacing samplers, and fitting
 end.time-start.time2 # post-compilation run time
