@@ -1,4 +1,4 @@
-#Multisession SMR using reversible jump MCMC instead of data augmentation
+#Multisession SMR using an alternative approach to data augmentation
 #For premarked individuals only. I will write a slightly modified sampler for natural marks.
 
 #This testscript shows how to share lam0, sigma, theta.d, and/or expected density across sessions
