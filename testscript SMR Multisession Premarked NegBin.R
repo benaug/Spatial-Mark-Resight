@@ -208,14 +208,16 @@ for(g in 1:N.session){
   }
 }
 
-#replace independent lam0 and sigma samplers with block sampler better accommodating for posterior covariance
+#maybe replace independent lam0 and sigma samplers with block sampler better accommodating for posterior covariance
 #should improve mixing and increase posterior effective sample size. AF_slice works better than block RW. 
 #Need to not use this update or modify it when using lam0 or sigma covariates.
 #This sampler is slower, so not worth it if data is not so sparse there is strong posterior correlation
 #between lam0 and sigma.
-conf$removeSampler(c("lam0.fixed","sigma.fixed"))
+
+#mixing seems generally good if you keep independent samplers and add block sampler (if data sparse enough that there is posterior correlation)
+# conf$removeSampler(c("lam0.fixed","sigma.fixed"))
 conf$addSampler(target = c("lam0.fixed","sigma.fixed"),type = 'RW_block',
-                  control = list(adaptive=TRUE),silent = TRUE)
+                control = list(adaptive=TRUE),silent = TRUE)
 
 # Build and compile
 Rmcmc <- buildMCMC(conf)
