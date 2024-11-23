@@ -1,16 +1,16 @@
-e2dist<- function (x, y){
+e2dist <- function (x, y){
   i <- sort(rep(1:nrow(y), nrow(x)))
   dvec <- sqrt((x[, 1] - y[i, 1])^2 + (x[, 2] - y[i, 2])^2)
   matrix(dvec, nrow = nrow(x), ncol = nrow(y), byrow = F)
 }
 
 getArea <- function(X=X,buff=buff){
-  N.session=length(X)
-  area=rep(NA,N.session)
+  N.session <- length(X)
+  area <- rep(NA,N.session)
   for(a in 1:N.session){
-    xlim=c(min(X[[a]][,1]),max(X[[a]][,1]))+c(-buff[[a]],buff[[a]])
-    ylim=c(min(X[[a]][,2]),max(X[[a]][,2]))+c(-buff[[a]],buff[[a]])
-    area[a]=diff(xlim)*diff(ylim)
+    xlim <- c(min(X[[a]][,1]),max(X[[a]][,1]))+c(-buff[[a]],buff[[a]])
+    ylim <- c(min(X[[a]][,2]),max(X[[a]][,2]))+c(-buff[[a]],buff[[a]])
+    area[a] <- diff(xlim)*diff(ylim)
   }
   return(area)
 }
@@ -42,22 +42,22 @@ sim.SMR.multisession <-
     if(length(theta.unmarked)!=N.session)stop("theta.unmarked must be of length N.session")
     
     #realized N
-    N=rpois(N.session,lambda)
+    N <- rpois(N.session,lambda)
     if(any(N==0))stop("At least one session N simulated to be 0")
     if(any(N<n.marked))stop("At least one session N simulated to be less than n.marked")
     
     library(abind)
-    xlim=ylim=matrix(NA,N.session,2)
-    s=D=vector("list",N.session)
-    J=rep(NA,N.session)
+    xlim <- ylim <- matrix(NA,N.session,2)
+    s <- D <- vector("list",N.session)
+    J <- rep(NA,N.session)
     
     for(g in 1:N.session){
-      X[[g]]=as.matrix(X[[g]])
-      xlim[g,]=c(min(X[[g]][,1]),max(X[[g]][,1]))+c(-buff[g],buff[g])
-      ylim[g,]=c(min(X[[g]][,2]),max(X[[g]][,2]))+c(-buff[g],buff[g])
-      s[[g]]<- cbind(runif(N[g], xlim[g,1],xlim[g,2]), runif(N[g],ylim[g,1],ylim[g,2]))
-      D[[g]]<- e2dist(s[[g]],X[[g]])
-      J[g]=nrow(X[[g]])
+      X[[g]] <- as.matrix(X[[g]])
+      xlim[g,] <- c(min(X[[g]][,1]),max(X[[g]][,1]))+c(-buff[g],buff[g])
+      ylim[g,] <- c(min(X[[g]][,2]),max(X[[g]][,2]))+c(-buff[g],buff[g])
+      s[[g]] <- cbind(runif(N[g], xlim[g,1],xlim[g,2]), runif(N[g],ylim[g,1],ylim[g,2]))
+      D[[g]] <- e2dist(s[[g]],X[[g]])
+      J[g] <- nrow(X[[g]])
     }
     
     #trap operation
@@ -73,54 +73,54 @@ sim.SMR.multisession <-
         }
       }
     }else{
-      K1D=vector("list",N.session)
+      K1D <- vector("list",N.session)
       for(g in 1:N.session){
-        K1D[[g]]=rep(K[g],J[g])
+        K1D[[g]] <- rep(K[g],J[g])
       }
     }
     
     #simulate sessions one at a time
-    data=vector("list",N.session)
+    data <- vector("list",N.session)
     for(g in 1:N.session){
-      data[[g]]=sim.SMR(N=N[g],n.marked=n.marked[g],marktype=marktype,
+      data[[g]] <- sim.SMR(N=N[g],n.marked=n.marked[g],marktype=marktype,
                    theta.marked=theta.marked[g,],theta.unmarked=theta.unmarked[g],
                    lam0=lam0[g],sigma=sigma[g],K=K[g],X=X[[g]],buff=buff[g],tlocs=tlocs[g],
                    obstype=obstype,theta.d=theta.d[g])
     }
     
     #combine session data
-    n.samples=rep(NA,N.session)
+    n.samples <- rep(NA,N.session)
     for(g in 1:N.session){
-      n.samples[g]=length(data[[g]]$this.j)
+      n.samples[g] <- length(data[[g]]$this.j)
     }
-    n.samples.max=max(n.samples)
-    this.j=this.k=samp.type=ID=matrix(NA,N.session,n.samples.max)
-    ID.marked=y=s=vector("list",N.session)
-    n.M=n.UM=rep(NA,N.session)
+    n.samples.max <- max(n.samples)
+    this.j <- this.k <- samp.type <- ID <- matrix(NA,N.session,n.samples.max)
+    ID.marked <- y <- s <- vector("list",N.session)
+    n.M <- n.UM <- rep(NA,N.session)
     for(g in 1:N.session){
-      this.j[g,1:n.samples[g]]=data[[g]]$this.j
-      this.k[g,1:n.samples[g]]=data[[g]]$this.k
-      samp.type[g,1:n.samples[g]]=data[[g]]$samp.type
-      ID[g,1:n.samples[g]]=data[[g]]$ID
-      n.M[g]=data[[g]]$n.M
-      n.UM[g]=data[[g]]$n.UM
-      y[[g]]=data[[g]]$y
-      s[[g]]=data[[g]]$s
+      this.j[g,1:n.samples[g]] <- data[[g]]$this.j
+      this.k[g,1:n.samples[g]] <- data[[g]]$this.k
+      samp.type[g,1:n.samples[g]] <- data[[g]]$samp.type
+      ID[g,1:n.samples[g]] <- data[[g]]$ID
+      n.M[g] <- data[[g]]$n.M
+      n.UM[g] <- data[[g]]$n.UM
+      y[[g]] <- data[[g]]$y
+      s[[g]] <- data[[g]]$s
       if(!is.null(data[[g]]$ID.marked)){
-        ID.marked[[g]]=data[[g]]$ID.marked
+        ID.marked[[g]] <- data[[g]]$ID.marked
       }
     }
     
     if(any(tlocs>0)){
-      locs=array(NA,dim=c(N.session,max(n.marked),max(tlocs),2))
+      locs <- array(NA,dim=c(N.session,max(n.marked),max(tlocs),2))
       for(g in 1:N.session){
-        locs[g,1:n.marked[g],1:tlocs[g],1:2]=data[[g]]$locs
+        locs[g,1:n.marked[g],1:tlocs[g],1:2] <- data[[g]]$locs
       }
     }else{
-      locs=NA
+      locs <- NA
     }
     
-    out<-list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=ID.marked, #observed data
+    out <- list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=ID.marked, #observed data
               n.marked=n.marked,locs=locs,n.M=n.M,n.UM=n.UM,
               y=y,s=s, ID=ID,N=N,#true data
               X=X,K=K,K1D=K1D,buff=buff,xlim=xlim,ylim=ylim)

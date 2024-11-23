@@ -30,33 +30,33 @@ nimbleOptions(determinePredictiveNodesInModel = FALSE)
 ####Simulate some data####
 #Here, I'll simulate 3 populations with different n.marked, K, X, and state space areas
 #sharing D, lam0, sigma so they can be shared during estimation
-N.session=3
-D = rep(0.4,N.session) #expected density in units of sigma and X
-n.marked=c(20,21,22)
-lam0=rep(0.25,N.session)
-theta.d=rep(0.05,N.session) # overdispersion parameter
-sigma=rep(0.5,N.session)
-K=c(5,6,7) #number of occasions
-buff=rep(2,N.session) #state space buffer
+N.session <- 3
+D <- rep(0.4,N.session) #expected density in units of sigma and X
+n.marked <- c(20,21,22)
+lam0 <- rep(0.25,N.session)
+theta.d <- rep(0.05,N.session) # overdispersion parameter
+sigma <- rep(0.5,N.session)
+K <- c(5,6,7) #number of occasions
+buff <- rep(2,N.session) #state space buffer
 #make trapping arrays
-X1=expand.grid(3:11,3:11)
-X2=expand.grid(3:12,3:12)
-X3=expand.grid(3:13,3:13)
-X=list(X1,X2,X3) #put in a list, one for each session
+X1 <- expand.grid(3:11,3:11)
+X2 <- expand.grid(3:12,3:12)
+X3 <- expand.grid(3:13,3:13)
+X <- list(X1,X2,X3) #put in a list, one for each session
 
 #See what expected N is for these expected D and state space areas
-area=getArea(X=X,buff=buff)
+area <- getArea(X=X,buff=buff)
 area #state space areas for each session resulting from X and buff
-lambda=D*area
+lambda <- D*area
 lambda #expected N in each session
 
 #theta is probability of observing each sample type for marked and unmarked individuals
-theta.marked=matrix(rep(c(0.75,0.15,0.1),N.session),nrow=N.session,byrow=TRUE) #P(ID, Marked no ID, unk status). must sum to 1
-theta.unmarked=rep(0.75,N.session) #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
-marktype="premarked" #are individuals premarked, or naturally marked? This test script only handles premarked.
-obstype="negbin"
-tlocs=c(10,10,10) #number of telemetry locs/marked individual in each session. For "premarked"
-data=sim.SMR.multisession(N.session=N.session,lambda=lambda,theta.d=theta.d,n.marked=n.marked,marktype=marktype,
+theta.marked <- matrix(rep(c(0.75,0.15,0.1),N.session),nrow=N.session,byrow=TRUE) #P(ID, Marked no ID, unk status). must sum to 1
+theta.unmarked <- rep(0.75,N.session) #prob known marked status. #P(ID, Marked no ID, unk status)=(0,theta.unmarked,1-theta.unmarked)
+marktype <- "premarked" #are individuals premarked, or naturally marked? This test script only handles premarked.
+obstype <- "negbin"
+tlocs <- c(10,10,10) #number of telemetry locs/marked individual in each session. For "premarked"
+data <- sim.SMR.multisession(N.session=N.session,lambda=lambda,theta.d=theta.d,n.marked=n.marked,marktype=marktype,
              theta.marked=theta.marked,theta.unmarked=theta.unmarked,
              lam0=lam0,sigma=sigma,K=K,X=X,buff=buff,tlocs=tlocs,
              obstype=obstype)
@@ -78,31 +78,31 @@ if(marktype=="natural"){
   # M1=rep(40,N.session) #Augmentation level for marked.
   stop("Natural marks not handled with this testscript. There will be another one that does.")
 }else{
-  M1=n.marked #Set to n.marked if premarked.
+  M1 <- n.marked #Set to n.marked if premarked.
 }
-M2=c(125,135,145) #Augmentation level for unmarked
+M2 <- c(125,135,145) #Augmentation level for unmarked
 #Monitor N.M and N.UM, marked and unmarked ind abundance to make sure N.M does not hit M1
 #and N.UM does not hit M1+M2 during sampling. If so, raise the offending M and run again.
-M.both=M1+M2
+M.both <- M1+M2
 #Need some inits to initialize data
 #Use reasonable inits for lam0 and sigma since we check to make sure initial observation
 #model likelihood is finite
 #also use this function checks to make sure theta.marked and theta.unmarked inits are in
 #the correct structure. 
-inits=list(lam0=lam0,sigma=sigma,theta.d=theta.d) #initializing with 1 parameter per session, just set all to same value.
+inits <- list(lam0=lam0,sigma=sigma,theta.d=theta.d) #initializing with 1 parameter per session, just set all to same value.
 #setting to truth here, don't do this in practice
 
 #This function structures the simulated data to fit the model in Nimble (some more restructing below)
 #Also checks some inits
-nimbuild=init.SMR.multisession(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="negbin")
+nimbuild <- init.SMR.multisession(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="negbin")
 
 #inits for nimble
-theta.unmarked.init=matrix(c(0,0.5,0.5),N.session,3,byrow=TRUE)
+theta.unmarked.init <- matrix(c(0,0.5,0.5),N.session,3,byrow=TRUE)
 
-N.init=rowSums(nimbuild$z,na.rm=TRUE)
-N.UM.init=rep(NA,N.session)
+N.init <- rowSums(nimbuild$z,na.rm=TRUE)
+N.UM.init <- rep(NA,N.session)
 for(g in 1:N.session){
-  N.UM.init[g]=sum(nimbuild$z[g,(M1[g]+1):M.both[g]])
+  N.UM.init[g] <- sum(nimbuild$z[g,(M1[g]+1):M.both[g]])
 }
 (N.init-N.UM.init)==n.marked #should be n.marked[g] individuals in initialized data
 
@@ -115,37 +115,37 @@ Niminits <- list(N=N.init,N.UM=N.UM.init,
 
 
 #constants for Nimble
-J=unlist(lapply(data$X,nrow))
-# constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
+J <- unlist(lapply(data$X,nrow))
+# constants <- list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
 #                 xlim=data$xlim,ylim=data$ylim,area=area)
 
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
-z.data=matrix(NA,N.session,max(M.both))
+z.data <- matrix(NA,N.session,max(M.both))
 for(g in 1:N.session){
-  z.data[g,1:data$n.marked[g]]=1
+  z.data[g,1:data$n.marked[g]] <- 1
 }
 
-# Nimdata<-list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array(NA,c(N.session,max(M.both),max(J),3)),
+# Nimdata <- list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array(NA,c(N.session,max(M.both),max(J),3)),
 #               ID=matrix(NA,N.session,max(nimbuild$n.samples)),z=z.data,X=nimbuild$X,capcounts=matrix(NA,N.session,max(M.both)))
 
 #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-constants<-list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
+constants <- list(N.session=N.session,M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=nimbuild$K1D,n.samples=nimbuild$n.samples,
                 xlim=data$xlim,ylim=data$ylim,area=area,
                 #telemetry stuff
                 tel.inds=nimbuild$tel.inds,
                 n.tel.inds=nimbuild$n.tel.inds,n.locs.ind=nimbuild$n.locs.ind)
-Nimdata<-list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array(NA,c(N.session,max(M.both),max(J),3)),
+Nimdata <- list(y.full=array(NA,dim=c(N.session,max(M.both),max(J))),y.event=array(NA,c(N.session,max(M.both),max(J),3)),
               ID=matrix(NA,N.session,max(nimbuild$n.samples)),z=z.data,X=nimbuild$X,capcounts=matrix(NA,N.session,max(M.both)),
               locs=data$locs)
 
 # set parameters to monitor
-parameters=c('lambda','lam0.fixed','sigma.fixed','theta.d.fixed','theta.marked','theta.unmarked',
+parameters <- c('lambda','lam0.fixed','sigma.fixed','theta.d.fixed','theta.marked','theta.unmarked',
               'n.M','n.UM','N.UM','N',"D")
 #other things we can monitor with separate thinning rate
-parameters2=c("ID","s")
+parameters2 <- c("ID","s")
 
 # Build the model, configure the mcmc, and compile
-start.time<-Sys.time()
+start.time <- Sys.time()
 Rmodel <- nimbleModel(code=NimModel, constants=constants, data=Nimdata,check=FALSE,
                       inits=Niminits)
 #much faster if we don't let nimble configure y and y.event nodes
@@ -173,8 +173,8 @@ for(g in 1:N.session){
                   silent = TRUE)
 }
 
-z.ups=round(M.both*0.25) # how many z proposals per iteration per session?
-J=nimbuild$J
+z.ups <- round(M.both*0.25) # how many z proposals per iteration per session?
+J <- nimbuild$J
 conf$removeSampler("N")
 for(g in 1:N.session){
   #nodes used for update, calcNodes + z nodes
@@ -185,7 +185,6 @@ for(g in 1:N.session){
   N.UM.node <- Rmodel$expandNodeNames(paste("N.UM[",g,"]")) #only used to update derived parameter when N updates
   z.nodes <- Rmodel$expandNodeNames(paste("z[",g,",","1:",M.both[g],"]"))
   calcNodes <- c(N.node,N.UM.node,y.nodes,lam.nodes,p.nodes)
-
   conf$addSampler(target = c("N"),
                   type = 'zSampler',control = list(z.ups=z.ups[g],J=J[g],M1=M1[g],M.both=M.both[g],g=g,
                                                    y.nodes=y.nodes,lam.nodes=lam.nodes,p.nodes=p.nodes,
@@ -226,14 +225,14 @@ Cmodel <- compileNimble(Rmodel)
 Cmcmc <- compileNimble(Rmcmc, project = Rmodel)
 
 # Run the model.
-start.time2<-Sys.time()
+start.time2 <- Sys.time()
 Cmcmc$run(5000,reset=FALSE) #short run for demonstration. can keep running this line to get more samples
-end.time<-Sys.time()
+end.time <- Sys.time()
 end.time-start.time  # total time for compilation, replacing samplers, and fitting
 end.time-start.time2 # post-compilation run time
 
 library(coda)
-mvSamples = as.matrix(Cmcmc$mvSamples)
+mvSamples <- as.matrix(Cmcmc$mvSamples)
 plot(mcmc(mvSamples[2:nrow(mvSamples),]))
 
 data$N #realized Ns

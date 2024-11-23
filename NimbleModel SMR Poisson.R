@@ -1,10 +1,10 @@
 NimModel <- nimbleCode({
   #detection function priors
-  lam0~dunif(0,15)
-  sigma~dunif(0,10)
+  lam0 ~ dunif(0,15)
+  sigma ~ dunif(0,10)
   #data augmentation priors for marked (1) and unmarked (2) individuals
-  psi1~dunif(0,1)
-  psi2~dunif(0,1)
+  psi1 ~ dunif(0,1)
+  psi2 ~ dunif(0,1)
   #sample type observation model priors (Dirichlet)
   alpha.marked[1] <- 1
   alpha.marked[2] <- 1

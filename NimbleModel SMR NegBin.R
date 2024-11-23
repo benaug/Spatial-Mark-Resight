@@ -1,20 +1,20 @@
 NimModel <- nimbleCode({
   #detection function priors
-  lam0~dunif(0,15)
-  theta.d~dunif(0,25) #careful with this prior. Too much prior mass near 0 gives very strong prior weight to high overdispersion
-  sigma~dunif(0,10)
+  lam0 ~ dunif(0,15)
+  theta.d ~ dunif(0,25) #careful with this prior. Too much prior mass near 0 gives very strong prior weight to high overdispersion
+  sigma ~ dunif(0,10)
   #data augmentation priors for marked (1) and unmarked (2) individuals
-  psi1~dunif(0,1)
-  psi2~dunif(0,1)
+  psi1 ~ dunif(0,1)
+  psi2 ~ dunif(0,1)
   #sample type observation model priors (Dirichlet)
   alpha.marked[1] <- 1
   alpha.marked[2] <- 1
   alpha.marked[3] <- 1
   alpha.unmarked[1] <- 1
   alpha.unmarked[2] <- 1
-  theta.marked[1:3]~ddirch(alpha.marked[1:3])
+  theta.marked[1:3] ~ ddirch(alpha.marked[1:3])
   theta.unmarked[1] <- 0
-  theta.unmarked[2:3]~ddirch(alpha.unmarked[1:2])
+  theta.unmarked[2:3] ~ ddirch(alpha.unmarked[1:2])
 
   #likelihoods (except for s/z priors)
   #Marked individuals first
@@ -44,8 +44,8 @@ NimModel <- nimbleCode({
   #If you have telemetry
   for(i in 1:n.tel.inds){
     for(m in 1:n.locs.ind[i]){
-      locs[tel.inds[i],m,1]~dnorm(s[tel.inds[i],1],sd=sigma)
-      locs[tel.inds[i],m,2]~dnorm(s[tel.inds[i],2],sd=sigma)
+      locs[tel.inds[i],m,1] ~ dnorm(s[tel.inds[i],1],sd=sigma)
+      locs[tel.inds[i],m,2] ~ dnorm(s[tel.inds[i],2],sd=sigma)
     }
   }
   
