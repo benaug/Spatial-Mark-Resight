@@ -11,7 +11,7 @@
 
 #It handles both "premarked" scenarios where you know the number of marked individuals
 #and "natural" where marks are from natural patterns on the animals so the number of marked 
-#individuals is unknown. For "premarked", consider using the random thinning model with partial ID covariates.
+#individuals is unknown. For "natural", consider using the random thinning model with partial ID covariates.
 
 #This sampler also handles telemetry for marked individuals in the "premarked" scenario. Don't try
 #to use telemetry with "natural" scenario. Not realistic and I'm not sure what my code will do!
@@ -41,7 +41,7 @@ nimbleOptions(determinePredictiveNodesInModel = FALSE)
 
 ####Simulate some data####
 N <- 78
-n.marked <- 20
+n.marked <- 20 #for "premarked", this is the number marked. for "natural", this is the number of captured individuals that are identifiable
 lam0 <- 0.25
 theta.d <- 0.025
 sigma <- 0.5

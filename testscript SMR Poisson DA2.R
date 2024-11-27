@@ -23,8 +23,8 @@
 
 library(nimble)
 source("sim.SMR.R")
-source("NimbleModel SMR Poisson.R")
-source("NimbleFunctions SMR Poisson.R")
+source("NimbleModel SMR Poisson DA2.R")
+source("NimbleFunctions SMR Poisson DA2.R")
 source("init.SMR.R")
 source("sSampler.R")
 
@@ -73,7 +73,7 @@ if(marktype=="natural"){
 M2 <- 125 #Augmentation level for unmarked
 #Monitor N.M and N.UM, marked and unmarked ind abundance to make sure N.M does not hit M1
 #and N.UM does not hit M1+M2 during sampling. If so, raise the offending M and run again.
-M.both <- M1+M2
+M.both <- M1 + M2
 #Need some inits to initialize data
 #Use reasonable inits for lam0 and sigma since we check to make sure initial observation
 #model likelihood is finite
@@ -86,15 +86,17 @@ inits <- list(lam0=lam0,sigma=sigma)
 nimbuild <- init.SMR(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="poisson")
 
 #inits for nimble
-#full inits. Nimble can initialize psi1 and psi2, but if sigma and lam0 initialized too far away
-#from truth, it can stop adapting before convergence and mix very poorly.
-Niminits <- list(z=nimbuild$z,s=nimbuild$s,ID=nimbuild$ID,capcounts=rowSums(nimbuild$y.full),
+#must initialize N.M and N.UM to be consistent with z. speeds converge to set consistent with lambda.N.M/UM
+Niminits <- list(z=nimbuild$z,s=nimbuild$s,
+                 N.M=sum(nimbuild$z[1:M1]),lambda.N.M=sum(nimbuild$z[1:M1]),
+                 N.UM=sum(nimbuild$z[(M1+1):M.both]),lambda.N.UM=sum(nimbuild$z[(M1+1):M.both]), 
+                 ID=nimbuild$ID,capcounts=rowSums(nimbuild$y.full),
                  y.full=nimbuild$y.full,y.event=nimbuild$y.event,
                  theta.unmarked=c(0,0.5,0.5),lam0=inits$lam0,sigma=inits$sigma)
 
 #constants for Nimble
 J <- nrow(data$X)
-constants <- list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,n.samples=nimbuild$n.samples,
+constants <- list(M1=M1,M.both=M.both,J=J,K1D=data$K1D,n.samples=nimbuild$n.samples,
                 xlim=data$xlim,ylim=data$ylim)
 
 # Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
@@ -112,8 +114,8 @@ Nimdata <- list(y.full=matrix(NA,nrow=M.both,ncol=J),y.event=array(NA,c(M.both,J
 #               locs=data$locs)
 
 # set parameters to monitor
-parameters <- c('psi1','psi2','lam0','sigma','theta.marked','theta.unmarked',
-              'n.M','n.UM','N.M','N.UM','N.tot')
+parameters <- c('lambda.N.M','lambda.N.UM','lam0','sigma','theta.marked','theta.unmarked',
+              'n.M','n.UM','N.M','N.UM','N')
 #other things we can monitor with separate thinning rate
 parameters2 <- c("ID","s")
 
@@ -121,43 +123,57 @@ parameters2 <- c("ID","s")
 start.time <- Sys.time()
 Rmodel <- nimbleModel(code=NimModel, constants=constants, data=Nimdata,check=FALSE,
                       inits=Niminits)
-conf <- configureMCMC(Rmodel,monitors=parameters, thin=1,
-                      monitors2=parameters2, thin2=10,
-                      useConjugacy = TRUE)
+config.nodes <- c('lambda.N.M','lambda.N.UM','lam0','sigma','theta.marked','theta.unmarked[2:3]')
+# config.nodes <- c()
+conf <- configureMCMC(Rmodel,monitors=parameters, thin=1,monitors2=parameters2, thin2=10,
+                      nodes=config.nodes)
 
-###One *required* sampler replacement
-##Here, we remove the default samplers for y.full and y.event, which are not correct
-#and replace it with the custom "IDSampler"
-conf$removeSampler("y.full")
-conf$removeSampler("y.event")
+#Add y.full/ID update
 conf$addSampler(target = paste0("y.full[1:",M.both,",1:",J,"]"),
                 type = 'IDSampler',control = list(M1=M1,M2=M2,M.both=M.both,J=J,K1D=data$K1D,n.fixed=nimbuild$n.fixed,
                                                   samp.type=nimbuild$samp.type,n.samples=nimbuild$n.samples,
                                                   this.j=nimbuild$this.j,match=nimbuild$match),
                 silent = TRUE)
 
-###Two *optional* sampler replacements:
+#add N/z updates
+#do we need to update N.M?
+if(marktype=="natural"){
+  updateMarked <- TRUE
+}else{
+  updateMarked <- FALSE #if premarked, N.M is known
+}
 
-#replace default activity center sampler that updates x and y locations separately with a joint update
-#a little more efficient. sSampler below only tunes s when z=1. Should better tune activity centers for 
-#uncaptured individuals
-conf$removeSampler(paste("s[1:",M.both,", 1:2]", sep=""))
+# how many z proposals per iteration per session for marked (if updated), unmarked?
+z.ups <- round(c(M1*0.25,M2*0.25)) #doing 25% of M1 and M2 here
+J <- nrow(data$X)
+
+#nodes used for update, calcNodes + z nodes
+y.nodes <- Rmodel$expandNodeNames(paste("y.full[1:",M.both,",1:",J,"]"))
+lam.nodes <- Rmodel$expandNodeNames(paste("lam[1:",M.both,",1:",J,"]"))
+N.M.node <- Rmodel$expandNodeNames(paste("N.M"))
+N.UM.node <- Rmodel$expandNodeNames(paste("N.UM"))
+N.node <- Rmodel$expandNodeNames(paste("N"))
+z.nodes <- Rmodel$expandNodeNames(paste("z[1:",M.both,"]"))
+calcNodes <- c(N.M.node,N.UM.node,N.node=N.node,y.nodes,lam.nodes)
+conf$addSampler(target = paste("N.UM"),
+                type = 'zSampler',control = list(updateMarked=updateMarked,z.ups=z.ups[1:2],
+                                                 J=J,M1=M1,M.both=M.both,
+                                                 y.nodes=y.nodes,lam.nodes=lam.nodes,N.M.node=N.M.node,
+                                                 N.UM.node=N.UM.node,z.nodes=z.nodes,
+                                                 calcNodes=calcNodes),
+                silent = TRUE)
+
+#add sSampler
 for(i in 1:M.both){
-  # conf$addSampler(target = paste("s[",i,", 1:2]", sep=""), #do not adapt covariance bc s's not deterministically linked to unmarked individuals
-  #                 type = 'RW_block',control=list(adaptive=TRUE,adaptScaleOnly=TRUE,adaptInterval=500),silent = TRUE)
   conf$addSampler(target = paste("s[",i,", 1:2]", sep=""),
                   type = 'sSampler',control=list(i=i,xlim=nimbuild$xlim,ylim=nimbuild$ylim,scale=0.25),silent = TRUE)
   #scale parameter here is just the starting scale. It will be tuned.
 }
 
-#replace independent lam0 and sigma samplers with block sampler better accommodating for posterior covariance
-#should improve mixing and increase posterior effective sample size. AF_slice works better than block RW. 
-#Need to not use this update or modify it when using lam0 or sigma covariates.
-#This sampler is slower, so not worth it if data is not so sparse there is strong posterior correlation
-#between lam0 and sigma
-conf$removeSampler(c("lam0","sigma"))
-conf$addSampler(target = c("lam0","sigma"),type = 'AF_slice',
-                control = list(adaptive=TRUE),silent = TRUE)
+#can add block sampler if lam0, sigma, lambda.N.UM, and/or lambda.N.M (if N.M unknown) posteriors highly correlated
+#RW_block faster, AFslice slower, but mixes better
+# conf$addSampler(target = c("lam0","sigma"),type = 'RW_block',
+#                 control = list(adaptive=TRUE),silent = TRUE)
 
 # Build and compile
 Rmcmc <- buildMCMC(conf)
@@ -174,7 +190,7 @@ end.time-start.time2 # post-compilation run time
 
 library(coda)
 mvSamples <- as.matrix(Cmcmc$mvSamples)
-plot(mcmc(mvSamples[2:nrow(mvSamples),]))
+plot(mcmc(mvSamples[500:nrow(mvSamples),]))
 
 data$n.M #true number of captured marked individuals
 data$n.UM #true number of captured unmarked individuals

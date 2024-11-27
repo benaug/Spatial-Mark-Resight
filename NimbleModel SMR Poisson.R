@@ -52,5 +52,5 @@ NimModel <- nimbleCode({
   n.UM <- Getncap(capcounts=capcounts[(M1+1):M.both],ID=ID[1:n.samples])
   N.M <- sum(z[1:M1])
   N.UM <- sum(z[(M1+1):M.both])
-  N.tot<- N.M + N.UM
+  N.tot <- N.M + N.UM
 })# end model

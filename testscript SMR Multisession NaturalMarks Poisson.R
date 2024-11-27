@@ -166,9 +166,9 @@ for(g in 1:N.session){
   lam.nodes <- Rmodel$expandNodeNames(paste("lam[",g,",","1:",M.both[g],",1:",J[g],"]"))
   N.M.node <- Rmodel$expandNodeNames(paste("N.M[",g,"]"))
   N.UM.node <- Rmodel$expandNodeNames(paste("N.UM[",g,"]"))
+  N.node <- Rmodel$expandNodeNames(paste("N[",g,"]"))
   z.nodes <- Rmodel$expandNodeNames(paste("z[",g,",","1:",M.both[g],"]"))
-  calcNodes <- c(N.M.node,N.UM.node,y.nodes,lam.nodes)
-
+  calcNodes <- c(N.M.node,N.UM.node,N.node,y.nodes,lam.nodes)
   conf$addSampler(target = paste("N.UM[",g,"]"),
                   type = 'zSampler',control = list(z.ups=z.ups[1:2,g],J=J[g],M1=M1[g],M.both=M.both[g],g=g,
                                                    y.nodes=y.nodes,lam.nodes=lam.nodes,N.M.node=N.M.node,

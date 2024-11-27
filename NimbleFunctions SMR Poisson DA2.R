@@ -116,18 +116,12 @@ IDSampler <- nimbleFunction(
     match <- control$match
     n.samples <- control$n.samples
     this.j <- control$this.j
-    g <- control$g
     calcNodes <- model$getDependencies(target)
   },
   run = function() {
-    z <- model$z[g,1:M.both]
-    y.full <- model$y.full[g,1:M.both,1:J]
-    lam <- model$lam[g,1:M.both,1:J]
-    #need to pull y.event out in loop due to 4D
-    y.event <- nimArray(dim = c(M.both, J, 3), init=FALSE)
-    for(i in 1:3) {
-      y.event[1:M.both, 1:J, i] <- model$y.event[g,1:M.both,1:J, i]
-    }
+    z <- model$z
+    y.full <- model$y.full
+    y.event <- model$y.event
 
     #precalculate log likelihoods.
     ll.y <- matrix(0,nrow=M.both,ncol=J)
@@ -135,7 +129,7 @@ IDSampler <- nimbleFunction(
     for(i in 1:M.both){
       if(z[i]==1){
         for(j in 1:J) {
-          ll.y[i,j] <-  dpois(y.full[i,j],K1D[j]*lam[i,j],log=TRUE)
+          ll.y[i,j] <- dpois(y.full[i,j],K1D[j]*model$lam[i,j],log=TRUE)
         }
       }
     }
@@ -143,7 +137,7 @@ IDSampler <- nimbleFunction(
       if(z[i]==1){
         for(j in 1:J) {
           if(y.full[i,j]>0){
-            ll.y.event[i,j] <- dmulti(y.event[i,j,1:3],y.full[i,j],model$theta.marked[g,1:3],log=TRUE)
+            ll.y.event[i,j] <- dmulti(y.event[i,j,1:3],y.full[i,j],model$theta.marked,log=TRUE)
           }
         }
       }
@@ -152,21 +146,21 @@ IDSampler <- nimbleFunction(
       if(z[i]==1){
         for(j in 1:J) {
           if(y.full[i,j]>0){
-            ll.y.event[i,j] <- dmulti(y.event[i,j,1:3],y.full[i,j],model$theta.unmarked[g,1:3],log=TRUE)
+            ll.y.event[i,j] <- dmulti(y.event[i,j,1:3],y.full[i,j],model$theta.unmarked,log=TRUE)
           }
         }
       }
     }
     ll.y.cand <- ll.y
     ll.y.event.cand <- ll.y.event
-    ID.curr <- model$ID[g,1:n.samples]
-
+    ID.curr <- model$ID
+    
     ###update IDs
     for(l in (n.fixed+1):n.samples){#for all samples without known IDs
       ID.cand <- ID.curr
       y.full.cand <- y.full
       y.event.cand <- y.event
-      propprobs <- lam[1:M.both,this.j[l]]
+      propprobs <- model$lam[1:M.both,this.j[l]]
       for(i in 1:M.both){ #zero out nonmatches and z=0
         if(!match[l,i] | z[i]==0){
           propprobs[i] <- 0
@@ -186,21 +180,21 @@ IDSampler <- nimbleFunction(
           y.event.cand[ID.cand[l],this.j[l],samp.type[l]] <- y.event[ID.cand[l],this.j[l],samp.type[l]]+1
           y.full.cand[ID.curr[l],this.j[l]] <- y.full[ID.curr[l],this.j[l]]-1
           y.full.cand[ID.cand[l],this.j[l]] <- y.full[ID.cand[l],this.j[l]]+1
-          ll.y.cand[swapped,this.j[l]] <- dpois(y.full.cand[swapped,this.j[l]],lam[swapped,this.j[l]]*K1D[this.j[l]],log=TRUE)
+          ll.y.cand[swapped,this.j[l]] <- dpois(y.full.cand[swapped,this.j[l]],model$lam[swapped,this.j[l]]*K1D[this.j[l]],log=TRUE)
           #old ID theta likelihood
           if(swapped[1]<=M1){#marked guy
             if(y.full.cand[swapped[1],this.j[l]]==0){
               ll.y.event.cand[swapped[1],this.j[l]] <- 0
             }else{
               ll.y.event.cand[swapped[1],this.j[l]] <- dmulti(y.event.cand[swapped[1],this.j[l],1:3],
-                                                           y.full.cand[swapped[1],this.j[l]],model$theta.marked[g,1:3],log=TRUE)
+                                                           y.full.cand[swapped[1],this.j[l]],model$theta.marked,log=TRUE)
             }
           }else{#unmarked guy
             if(y.full.cand[swapped[1],this.j[l]]==0){
               ll.y.event.cand[swapped[1],this.j[l]] <- 0
             }else{
               ll.y.event.cand[swapped[1],this.j[l]] <- dmulti(y.event.cand[swapped[1],this.j[l],1:3],
-                                                           y.full.cand[swapped[1],this.j[l]],model$theta.unmarked[g,1:3],log=TRUE)
+                                                           y.full.cand[swapped[1],this.j[l]],model$theta.unmarked,log=TRUE)
             }
           }
           #new ID theta likelihood
@@ -209,14 +203,14 @@ IDSampler <- nimbleFunction(
               ll.y.event.cand[swapped[2],this.j[l]] <- 0
             }else{
               ll.y.event.cand[swapped[2],this.j[l]] <- dmulti(y.event.cand[swapped[2],this.j[l],1:3],
-                                                           y.full.cand[swapped[2],this.j[l]],model$theta.marked[g,1:3],log=TRUE)
+                                                           y.full.cand[swapped[2],this.j[l]],model$theta.marked,log=TRUE)
             }
           }else{#unmarked guy
             if(y.full.cand[swapped[2],this.j[l]]==0){
               ll.y.event.cand[swapped[2],this.j[l]] <- 0
             }else{
               ll.y.event.cand[swapped[2],this.j[l]] <- dmulti(y.event.cand[swapped[2],this.j[l],1:3],
-                                                           y.full.cand[swapped[2],this.j[l]],model$theta.unmarked[g,1:3],log=TRUE)
+                                                           y.full.cand[swapped[2],this.j[l]],model$theta.unmarked,log=TRUE)
             }
           }
           #select sample to move proposal probabilities
@@ -227,7 +221,7 @@ IDSampler <- nimbleFunction(
             y.event[swapped[1],this.j[l],samp.type[l]]/sum(y.event[swapped[1],1:J,samp.type[l]])
           focalbackprob <- (sum(ID.cand==swapped[2]&samp.type==samp.type[l])/n.samples)*
             y.event.cand[swapped[2],this.j[l],samp.type[l]]/sum(y.event.cand[swapped[2],1:J,samp.type[l]])
-
+          
           #sum log likelihoods and do MH step
           lp_initial <- sum(ll.y[swapped,this.j[l]])+sum(ll.y.event[swapped,this.j[l]])
           lp_proposed <- sum(ll.y.cand[swapped,this.j[l]])+sum(ll.y.event.cand[swapped,this.j[l]])
@@ -248,23 +242,20 @@ IDSampler <- nimbleFunction(
       }
     }
     #put everything back into the model$stuff
-    #must use loop for y.event because 4D
-    model$y.full[g,1:M.both,1:J] <<- y.full
-    for(i in 1:3) {
-      model$y.event[g,1:M.both,1:J, i] <<- y.event[1:M.both, 1:J, i]
-    }
-    model$ID[g,1:n.samples] <<- ID.curr
+    model$y.full <<- y.full
+    model$y.event <<- y.event
+    model$ID <<- ID.curr
     model.lp.proposed <- model$calculate(calcNodes) #update logprob
     copy(from = model, to = mvSaved, row = 1, nodes = calcNodes, logProb = TRUE)
   },
   methods = list( reset = function () {} )
 )
 
+
 #Required custom update for N/z
 zSampler <- nimbleFunction(
   contains = sampler_BASE,
   setup = function(model, mvSaved, target, control) {
-    g <- control$g
     J <- control$J
     M1 <- control$M1
     M.both <- control$M.both
@@ -274,112 +265,114 @@ zSampler <- nimbleFunction(
     N.M.node <- control$N.M.node
     N.UM.node <- control$N.UM.node
     z.nodes <- control$z.nodes
+    updateMarked <- control$updateMarked
     calcNodes <- control$calcNodes
   },
   run = function() {
-    ###1)  Do marked individuals first###
-    for(up in 1:z.ups[1]){ #how many updates per iteration?
-      #propose to add/subtract 1
-      updown <- rbinom(1,1,0.5) #p=0.5 is symmetric. If you change this, must account for asymmetric proposal
-      if(updown==0){#subtract
-        reject <- FALSE #we auto reject if you select a detected individual
+    if(updateMarked){
+      ###1)  Do marked individuals first###
+      for(up in 1:z.ups[1]){ #how many updates per iteration?
+        # propose to add/subtract 1
+        updown <- rbinom(1,1,0.5) #p=0.5 is symmetric. If you change this, must account for asymmetric proposal
+        if(updown==0){#subtract
+          reject <- FALSE #we auto reject if you select a detected individual
 
-        #find all z's currently on *excluding unmarked individuals*
-        z.on <- which(model$z[g,1:M1]==1)
+          #find all z's currently on *excluding unmarked individuals*
+          z.on <- which(model$z[1:M1]==1)
 
-        n.z.on <- length(z.on)
-        if(n.z.on>0){ #skip if no marked z's to turn off, otherwise nimble will crash
-          pick <- rcat(1,rep(1/n.z.on,n.z.on)) #select one of these individuals
-          pick <- z.on[pick]
+          n.z.on <- length(z.on)
+          if(n.z.on>0){ #skip if no marked z's to turn off, otherwise nimble will crash
+            pick <- rcat(1,rep(1/n.z.on,n.z.on)) #select one of these individuals
+            pick <- z.on[pick]
 
-          #prereject turning off marked individuals currently allocated samples
-          if(model$capcounts[g,pick]>0){#is this an marked individual with samples?
-            reject <- TRUE
+            #prereject turning off marked individuals currently allocated samples
+            if(model$capcounts[pick]>0){#is this an marked individual with samples?
+              reject <- TRUE
+            }
+            if(!reject){
+              #get initial logprobs for N and y
+              lp.initial.N <- model$getLogProb(N.M.node)
+              lp.initial.y <- model$getLogProb(y.nodes[pick])
+
+              #propose new N/z
+              model$N.M[1] <<-  model$N.M[1] - 1
+              model$N[1] <<-  model$N[1] - 1
+              model$z[pick] <<- 0
+
+              #turn lam off
+              model$calculate(lam.nodes[pick])
+
+              #get proposed logprobs for N and y
+              lp.proposed.N <- model$calculate(N.M.node)
+              lp.proposed.y <- model$calculate(y.nodes[pick]) #will always be 0
+
+              #MH step
+              log_MH_ratio <- (lp.proposed.N + lp.proposed.y) - (lp.initial.N + lp.initial.y)
+              accept <- decide(log_MH_ratio)
+              if(accept) {
+                mvSaved["N",1][1] <<- model[["N"]]
+                mvSaved["N.M",1][1] <<- model[["N.M"]]
+                for(j in 1:J){
+                  mvSaved["lam",1][pick,j] <<- model[["lam"]][pick,j]
+                }
+                mvSaved["z",1][pick] <<- model[["z"]][pick]
+              }else{
+                model[["N"]] <<- mvSaved["N",1][1]
+                model[["N.M"]] <<- mvSaved["N.M",1][1]
+                for(j in 1:J){
+                  model[["lam"]][pick,j] <<- mvSaved["lam",1][pick,j]
+                }
+                model[["z"]][pick] <<- mvSaved["z",1][pick]
+                model$calculate(y.nodes[pick])
+                model$calculate(N.M.node)
+              }
+            }
           }
-          if(!reject){
+        }else{#add
+          if(model$N.M[1] < M1){ #cannot update if z maxed out. Need to raise M1
+            #find all z's currently off. marked guys only
+            z.off <- which(model$z[1:M1]==0)
+
+            n.z.off <- length(z.off)
+            pick <- rcat(1,rep(1/n.z.off,n.z.off)) #select one of these individuals
+            pick <- z.off[pick]
+
             #get initial logprobs for N and y
             lp.initial.N <- model$getLogProb(N.M.node)
-            lp.initial.y <- model$getLogProb(y.nodes[pick])
+            lp.initial.y <- model$getLogProb(y.nodes[pick]) #will always be 0
 
             #propose new N/z
-            model$N.M[g] <<-  model$N.M[g] - 1
-            model$N[g] <<-  model$N[g] - 1
-            model$z[g,pick] <<- 0
+            model$N.M[1] <<-  model$N.M[1] + 1
+            model$N[1] <<-  model$N[1] + 1
+            model$z[pick] <<- 1
 
-            #turn lam off
+            #turn lam on
             model$calculate(lam.nodes[pick])
 
             #get proposed logprobs for N and y
             lp.proposed.N <- model$calculate(N.M.node)
-            lp.proposed.y <- model$calculate(y.nodes[pick]) #will always be 0
+            lp.proposed.y <- model$calculate(y.nodes[pick])
 
             #MH step
             log_MH_ratio <- (lp.proposed.N + lp.proposed.y) - (lp.initial.N + lp.initial.y)
             accept <- decide(log_MH_ratio)
             if(accept) {
-              mvSaved["N",1][g] <<- model[["N"]][g]
-              mvSaved["N.M",1][g] <<- model[["N.M"]][g]
+              mvSaved["N.M",1][1] <<- model[["N.M"]]
+              mvSaved["N",1][1] <<- model[["N"]]
               for(j in 1:J){
-                mvSaved["lam",1][g,pick,j] <<- model[["lam"]][g,pick,j]
+                mvSaved["lam",1][pick,j] <<- model[["lam"]][pick,j]
               }
-              mvSaved["z",1][g,pick] <<- model[["z"]][g,pick]
+              mvSaved["z",1][pick] <<- model[["z"]][pick]
             }else{
-              model[["N"]][g] <<- mvSaved["N",1][g]
-              model[["N.M"]][g] <<- mvSaved["N.M",1][g]
+              model[["N"]] <<- mvSaved["N",1][1]
+              model[["N.M"]] <<- mvSaved["N.M",1][1]
               for(j in 1:J){
-                model[["lam"]][g,pick,j] <<- mvSaved["lam",1][g,pick,j]
+                model[["lam"]][pick,j] <<- mvSaved["lam",1][pick,j]
               }
-              model[["z"]][g,pick] <<- mvSaved["z",1][g,pick]
+              model[["z"]][pick] <<- mvSaved["z",1][pick]
               model$calculate(y.nodes[pick])
               model$calculate(N.M.node)
             }
-          }
-        }
-      }else{#add
-        if(model$N.M[g] < M1){ #cannot update if z maxed out. Need to raise M1
-
-          #find all z's currently off. marked guys only
-          z.off <- which(model$z[g,1:M1]==0)
-
-          n.z.off <- length(z.off)
-          pick <- rcat(1,rep(1/n.z.off,n.z.off)) #select one of these individuals
-          pick <- z.off[pick]
-
-          #get initial logprobs for N and y
-          lp.initial.N <- model$getLogProb(N.M.node)
-          lp.initial.y <- model$getLogProb(y.nodes[pick]) #will always be 0
-
-          #propose new N/z
-          model$N.M[g] <<-  model$N.M[g] + 1
-          model$N[g] <<-  model$N[g] + 1
-          model$z[g,pick] <<- 1
-
-          #turn lam on
-          model$calculate(lam.nodes[pick])
-
-          #get proposed logprobs for N and y
-          lp.proposed.N <- model$calculate(N.M.node)
-          lp.proposed.y <- model$calculate(y.nodes[pick])
-
-          #MH step
-          log_MH_ratio <- (lp.proposed.N + lp.proposed.y) - (lp.initial.N + lp.initial.y)
-          accept <- decide(log_MH_ratio)
-          if(accept) {
-            mvSaved["N.M",1][g] <<- model[["N.M"]][g]
-            mvSaved["N",1][g] <<- model[["N"]][g]
-            for(j in 1:J){
-              mvSaved["lam",1][g,pick,j] <<- model[["lam"]][g,pick,j]
-            }
-            mvSaved["z",1][g,pick] <<- model[["z"]][g,pick]
-          }else{
-            model[["N"]][g] <<- mvSaved["N",1][g]
-            model[["N.M"]][g] <<- mvSaved["N.M",1][g]
-            for(j in 1:J){
-              model[["lam"]][g,pick,j] <<- mvSaved["lam",1][g,pick,j]
-            }
-            model[["z"]][g,pick] <<- mvSaved["z",1][g,pick]
-            model$calculate(y.nodes[pick])
-            model$calculate(N.M.node)
           }
         }
       }
@@ -392,7 +385,7 @@ zSampler <- nimbleFunction(
         reject <- FALSE #we auto reject if you select a detected individual
 
         #find all z's currently on *excluding marked individuals*
-        z.on2 <- which(model$z[g,(M1+1):M.both]==1)+M1 #cannot reuse objects created from R functions, (z.on2, instead of z.on)
+        z.on2 <- which(model$z[(M1+1):M.both]==1) + M1 #cannot reuse objects created from R functions, (z.on2, instead of z.on)
 
         n.z.on <- length(z.on2)
         if(n.z.on>0){ #skip if no unmarked z's to turn off, otherwise nimble will crash
@@ -400,7 +393,7 @@ zSampler <- nimbleFunction(
           pick <- z.on2[pick]
 
           #prereject turning off unmarked individuals currently allocated samples
-          if(model$capcounts[g,pick]>0){#is this an unmarked individual with samples?
+          if(model$capcounts[pick]>0){#is this an unmarked individual with samples?
             reject <- TRUE
           }
           if(!reject){
@@ -409,9 +402,9 @@ zSampler <- nimbleFunction(
             lp.initial.y <- model$getLogProb(y.nodes[pick])
 
             #propose new N/z
-            model$N.UM[g] <<-  model$N.UM[g] - 1
-            model$N[g] <<-  model$N[g] - 1
-            model$z[g,pick] <<- 0
+            model$N.UM[1] <<-  model$N.UM[1] - 1
+            model$N[1] <<-  model$N[1] - 1
+            model$z[pick] <<- 0
 
             #turn lam off
             model$calculate(lam.nodes[pick])
@@ -424,29 +417,29 @@ zSampler <- nimbleFunction(
             log_MH_ratio <- (lp.proposed.N + lp.proposed.y) - (lp.initial.N + lp.initial.y)
             accept <- decide(log_MH_ratio)
             if(accept) {
-              mvSaved["N",1][g] <<- model[["N"]][g]
-              mvSaved["N.UM",1][g] <<- model[["N.UM"]][g]
+              mvSaved["N",1][1] <<- model[["N"]]
+              mvSaved["N.UM",1][1] <<- model[["N.UM"]]
               for(j in 1:J){
-                mvSaved["lam",1][g,pick,j] <<- model[["lam"]][g,pick,j]
+                mvSaved["lam",1][pick,j] <<- model[["lam"]][pick,j]
               }
-              mvSaved["z",1][g,pick] <<- model[["z"]][g,pick]
+              mvSaved["z",1][pick] <<- model[["z"]][pick]
             }else{
-              model[["N"]][g] <<- mvSaved["N",1][g]
-              model[["N.UM"]][g] <<- mvSaved["N.UM",1][g]
+              model[["N"]] <<- mvSaved["N",1][1]
+              model[["N.UM"]] <<- mvSaved["N.UM",1][1]
               for(j in 1:J){
-                model[["lam"]][g,pick,j] <<- mvSaved["lam",1][g,pick,j]
+                model[["lam"]][pick,j] <<- mvSaved["lam",1][pick,j]
               }
-              model[["z"]][g,pick] <<- mvSaved["z",1][g,pick]
+              model[["z"]][pick] <<- mvSaved["z",1][pick]
               model$calculate(y.nodes[pick])
               model$calculate(N.UM.node)
             }
           }
         }
       }else{#add
-        if(model$N.UM[g] < M.both-M1 ){ #cannot update if z maxed out. Need to raise M2
+        if(model$N.UM[1] < M.both-M1 ){ #cannot update if z maxed out. Need to raise M2
 
           #find all z's currently off. Marked inds excluded here bc always on.
-          z.off2 <- which(model$z[g,(M1+1):M.both]==0)+M1
+          z.off2 <- which(model$z[(M1+1):M.both]==0) + M1
 
           n.z.off <- length(z.off2)
           pick <- rcat(1,rep(1/n.z.off,n.z.off)) #select one of these individuals
@@ -457,9 +450,9 @@ zSampler <- nimbleFunction(
           lp.initial.y <- model$getLogProb(y.nodes[pick]) #will always be 0
 
           #propose new N/z
-          model$N.UM[g] <<-  model$N.UM[g] + 1
-          model$N[g] <<-  model$N[g] + 1
-          model$z[g,pick] <<- 1
+          model$N.UM[1] <<-  model$N.UM[1] + 1
+          model$N[1] <<-  model$N[1] + 1
+          model$z[pick] <<- 1
 
           #turn lam on
           model$calculate(lam.nodes[pick])
@@ -472,19 +465,19 @@ zSampler <- nimbleFunction(
           log_MH_ratio <- (lp.proposed.N + lp.proposed.y) - (lp.initial.N + lp.initial.y)
           accept <- decide(log_MH_ratio)
           if(accept) {
-            mvSaved["N.UM",1][g] <<- model[["N.UM"]][g]
-            mvSaved["N",1][g] <<- model[["N"]][g]
+            mvSaved["N.UM",1][1] <<- model[["N.UM"]]
+            mvSaved["N",1][1] <<- model[["N"]]
             for(j in 1:J){
-              mvSaved["lam",1][g,pick,j] <<- model[["lam"]][g,pick,j]
+              mvSaved["lam",1][pick,j] <<- model[["lam"]][pick,j]
             }
-            mvSaved["z",1][g,pick] <<- model[["z"]][g,pick]
+            mvSaved["z",1][pick] <<- model[["z"]][pick]
           }else{
-            model[["N"]][g] <<- mvSaved["N",1][g]
-            model[["N.UM"]][g] <<- mvSaved["N.UM",1][g]
+            model[["N"]] <<- mvSaved["N",1][1]
+            model[["N.UM"]] <<- mvSaved["N.UM",1][1]
             for(j in 1:J){
-              model[["lam"]][g,pick,j] <<- mvSaved["lam",1][g,pick,j]
+              model[["lam"]][pick,j] <<- mvSaved["lam",1][pick,j]
             }
-            model[["z"]][g,pick] <<- mvSaved["z",1][g,pick]
+            model[["z"]][pick] <<- mvSaved["z",1][pick]
             model$calculate(y.nodes[pick])
             model$calculate(N.UM.node)
           }

@@ -5,6 +5,7 @@ sSampler <- nimbleFunction(
     i <- control$i    
     xlim <- control$xlim
     ylim <- control$ylim
+    M1 <- control$M1
     ## control list extraction
     # logScale            <- extractControlElement(control, 'log',                 FALSE)
     # reflective          <- extractControlElement(control, 'reflective',          FALSE)
@@ -15,6 +16,15 @@ sSampler <- nimbleFunction(
     ## node list generation
     # targetAsScalar <- model$expandNodeNames(target, returnScalarComponents = TRUE)
     calcNodes <- model$getDependencies(target)
+    s.nodes <- model$expandNodeNames(paste("s[",i,",",1:2,"]"))
+    y.mID.nodes <- model$expandNodeNames(paste("y.mID[",i,",1:",J,"]"))
+    y.mnoID.nodes <- model$expandNodeNames("y.mnoID")
+    y.um.nodes <- model$expandNodeNames("y.um")
+    y.unk.nodes <- model$expandNodeNames("y.unk")
+    lam.nodes <- model$expandNodeNames(paste("lam[",i,",1:",J,"]"))
+    lam.mnoID.nodes <- model$expandNodeNames(paste("lam.mnoID[1:",J,"]"))
+    lam.um.nodes <- model$expandNodeNames(paste("lam.um[1:",J,"]"))
+    lam.unk.nodes <- model$expandNodeNames(paste("lam.unk[1:",J,"]"))
     # calcNodesNoSelf <- model$getDependencies(target, self = FALSE)
     # isStochCalcNodesNoSelf <- model$isStoch(calcNodesNoSelf)   ## should be made faster
     # calcNodesNoSelfDeterm <- calcNodesNoSelf[!isStochCalcNodesNoSelf]
@@ -42,16 +52,59 @@ sSampler <- nimbleFunction(
     z <- model$z[i]
     if(z==0){#propose from unifrom prior
       model$s[i, 1:2] <<- c(runif(1, xlim[1], xlim[2]), runif(1, ylim[1], ylim[2]))
-      model$calculate(calcNodes)
-      copy(from = model, to = mvSaved, row = 1, nodes = calcNodes, logProb = TRUE)
+      model$calculate(s.nodes)
+      copy(from = model, to = mvSaved, row = 1, nodes = s.nodes, logProb = TRUE)
     }else{#MH
       s.cand <- c(rnorm(1,model$s[i,1],scale), rnorm(1,model$s[i,2],scale))
       inbox <- s.cand[1]< xlim[2] & s.cand[1]> xlim[1] & s.cand[2] < ylim[2] & s.cand[2] > ylim[1]
       if(inbox){
-        model_lp_initial <- model$getLogProb(calcNodes)
-        model$s[i, 1:2] <<- s.cand
-        model_lp_proposed <- model$calculate(calcNodes)
-        log_MH_ratio <- model_lp_proposed - model_lp_initial
+        #get initial logprobs - not optimizing by considering if this is marked or unmarked i
+        lp_initial_s <- model$getLogProb(s.nodes)
+        lp_initial_y.unk <- model$getLogProb(y.unk.nodes)
+        if(i<=M1){ #if marked
+          lp_initial_y.mID <- model$getLogProb(y.mID.nodes)
+          lp_initial_y.mnoID <- model$getLogProb(y.mnoID.nodes)
+          #pull this out of model object
+          bigLam.marked.initial <- model$bigLam.marked
+          #update proposed s
+          model$s[i, 1:2] <<- s.cand
+          lp_proposed_s <- model$calculate(s.nodes) #proposed logprob for s.nodes
+          #subtract these out before calculating lam
+          bigLam.marked.proposed <- bigLam.marked.initial - model$lam[i,]
+          model$calculate(lam.nodes) #update lam nodes
+          #add these in after calculating lam
+          bigLam.marked.proposed <- bigLam.marked.proposed + model$lam[i,]
+          #put bigLam in model object 
+          model$bigLam.marked <<- bigLam.marked.proposed
+          model$calculate(lam.mnoID.nodes) #update after bigLam
+          model$calculate(lam.unk.nodes) #update after bigLam
+          lp_proposed_y.mID <- model$calculate(y.mID.nodes)
+          lp_proposed_y.mnoID <- model$calculate(y.mnoID.nodes)
+          lp_proposed_y.unk <- model$calculate(y.unk.nodes)
+          lp_initial <- lp_initial_s + lp_initial_y.mID + lp_initial_y.mnoID + lp_initial_y.unk
+          lp_proposed <- lp_proposed_s + lp_proposed_y.mID + lp_proposed_y.mnoID + lp_proposed_y.unk
+        }else{ #else unmarked
+          lp_initial_y.um <- model$getLogProb(y.um.nodes)
+          #pull this out of model object
+          bigLam.unmarked.initial <- model$bigLam.unmarked
+          #update proposed s
+          model$s[i, 1:2] <<- s.cand
+          lp_proposed_s <- model$calculate(s.nodes) #proposed logprob for s.nodes
+          #subtract these out before calculating lam
+          bigLam.unmarked.proposed <- bigLam.unmarked.initial - model$lam[i,]
+          model$calculate(lam.nodes) #update lam nodes
+          #add these in after calculating lam
+          bigLam.unmarked.proposed <- bigLam.unmarked.proposed + model$lam[i,]
+          #put bigLam in model object 
+          model$bigLam.unmarked <<- bigLam.unmarked.proposed
+          model$calculate(lam.um.nodes) #update after bigLam
+          model$calculate(lam.unk.nodes) #update after bigLam
+          lp_proposed_y.um <- model$calculate(y.um.nodes)
+          lp_proposed_y.unk <- model$calculate(y.unk.nodes)
+          lp_initial <- lp_initial_s + lp_initial_y.um + lp_initial_y.unk
+          lp_proposed <- lp_proposed_s + lp_proposed_y.um + lp_proposed_y.unk
+        }
+        log_MH_ratio <- lp_proposed - lp_initial
         accept <- decide(log_MH_ratio)
         if(accept) {
           copy(from = model, to = mvSaved, row = 1, nodes = calcNodes, logProb = TRUE)
