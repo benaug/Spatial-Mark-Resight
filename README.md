@@ -16,3 +16,7 @@ In this version, the prior distribution for N is Poisson instead of Binomial, an
 to speed up the N/z and s updates. This approach only works with Poisson count models (not negative binomial, etc.)
 
 https://link.springer.com/article/10.1007/s13253-023-00598-3
+
+12/15/24:
+
+Added "Poisson Dcov DA2 Marginal" that allows spatial density covariates.

@@ -4,8 +4,8 @@ e2dist <- function (x, y){
   matrix(dvec, nrow = nrow(x), ncol = nrow(y), byrow = F)
 }
 
-sim.SMR <-
-  function(N=50,n.marked=10,lam0=NA,theta.d=NA,sigma=0.50,K=10,X=X,buff=3,
+sim.SMR.Dcov <-
+  function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,n.marked=NA,lam0=NA,theta.d=NA,sigma=0.50,K=10,X=X,buff=NA,
            theta.marked=c(1,0,0),theta.unmarked=1,K1D=NA,tlocs=0,marktype="natural",obstype="poisson"){
     if(!marktype%in%c("natural","premarked")){
       stop("marktype must be 'natural' or 'premarked'")
@@ -13,11 +13,35 @@ sim.SMR <-
     if(sum(theta.marked)!=1)stop("theta.marked must sum to 1.")
     if(theta.unmarked<0|theta.unmarked>1)stop("theta.unmarked must be between 0 and 1.")
     library(abind)
+    #get expected N
+    cellArea <- res^2
+    lambda.cell <- exp(D.beta0 + D.beta1*D.cov)*cellArea
+    lambda.N <- sum(lambda.cell)
+    #simulate realized N
+    N <- rpois(1,lambda.N)
+    
+    #recreate some Dcov things so we can pass fewer arguments into this function
+    x.vals <- seq(xlim[1]+res/2,xlim[2]-res/2,res) #x cell centroids
+    y.vals <- seq(ylim[1]+res/2,ylim[2]-res/2,res) #y cell centroids
+    dSS <- as.matrix(cbind(expand.grid(x.vals,y.vals)))
+    cells <- matrix(1:nrow(dSS),nrow=length(x.vals),ncol=length(y.vals))
+    n.cells <- nrow(dSS)
+    n.cells.x <- length(x.vals)
+    n.cells.y <- length(y.vals)
+    
     # simulate a population of activity centers
-    X <- as.matrix(X)
-    xlim <- c(min(X[,1]),max(X[,1]))+c(-buff,buff)
-    ylim <- c(min(X[,2]),max(X[,2]))+c(-buff,buff)
-    s <- cbind(runif(N, xlim[1],xlim[2]), runif(N,ylim[1],ylim[2]))
+    pi.cell <- lambda.cell/sum(lambda.cell)
+    #zero out non-habitat
+    pi.cell[InSS==0] <- 0
+    s.cell <- sample(1:n.cells,N,prob=pi.cell,replace=TRUE)
+    #distribute activity centers uniformly inside cells
+    s <- matrix(NA,nrow=N,ncol=2)
+    for(i in 1:N){
+      tmp <- which(cells==s.cell[i],arr.ind=TRUE) #x and y number
+      s[i,1] <- runif(1,x.vals[tmp[1]]-res/2,x.vals[tmp[1]+res/2])
+      s[i,2] <- runif(1,y.vals[tmp[2]]-res/2,y.vals[tmp[2]+res/2])
+    }
+    
     D <- e2dist(s,X)
     J <- nrow(X)
     
@@ -325,7 +349,10 @@ sim.SMR <-
     
     out <- list(this.j=this.j,this.k=this.k,samp.type=samp.type,ID.marked=IDmarked, #observed data
               n.marked=n.marked,locs=locs,n.M=n.M,n.UM=n.UM,
-              y=y,s=s, ID=ID,#true data
-              X=X,K=K,K1D=K1D,buff=buff,xlim=xlim,ylim=ylim)
+              y=y,s=s, ID=ID,#true detection data
+              X=X,K=K,K1D=K1D,
+              xlim=xlim,ylim=ylim,x.vals=x.vals,y.vals=y.vals,dSS=dSS,cells=cells,
+              n.cells=n.cells,n.cells.x=n.cells.x,n.cells.y=n.cells.y,s.cell=s.cell,
+              D.cov=D.cov,InSS=InSS,res=res,cellArea=cellArea,N=N,lambda.N=lambda.N)
     return(out)
   }
