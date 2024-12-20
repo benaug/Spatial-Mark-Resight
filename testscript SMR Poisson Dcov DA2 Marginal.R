@@ -122,7 +122,7 @@ points(X,pch=4,cex=1,lwd=2)
 #setting seed here because I am setting a seed to produce the D.cov and you will simulate the same
 #data set over and over if you don't use different seeds here for each data set you simulate
 set.seed(143532) #change seed for new data set
-data <- sim.SMR.Dcov(D.beta0=D.beta0,D.beta1=D.beta1,
+data <- sim.SMR.Dcov(D.beta0=D.beta0,D.beta1=D.beta1,res=res,
                 D.cov=D.cov,InSS=InSS,n.marked=n.marked,marktype=marktype,
                 theta.marked=theta.marked,theta.unmarked=theta.unmarked,
                 lam0=lam0,sigma=sigma,K=K,X=X,xlim=xlim,ylim=ylim,tlocs=tlocs,
