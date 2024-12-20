@@ -5,7 +5,7 @@ e2dist <- function (x, y){
 }
 
 sim.SMR.Dcov <-
-  function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,n.marked=NA,lam0=NA,
+  function(D.beta0=NA,D.beta1=NA,D.cov=NA,InSS=NA,res=NA,n.marked=NA,lam0=NA,
            theta.d=NA,sigma=0.50,K=10,X=X,xlim=NA,ylim=NA,
            theta.marked=c(1,0,0),theta.unmarked=1,K1D=NA,tlocs=0,marktype="natural",obstype="poisson"){
     if(!marktype%in%c("natural","premarked")){
