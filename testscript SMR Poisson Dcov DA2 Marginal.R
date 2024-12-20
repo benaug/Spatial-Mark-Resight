@@ -37,6 +37,7 @@ source("NimbleModel SMR Poisson Dcov DA2 Marginal.R")
 source("NimbleFunctions SMR Poisson Dcov DA2 Marginal.R")
 source("init.SMR.Dcov.R")
 source("sSampler Poisson Dcov Marginal.R")
+source("mask.check.R")
 
 #If using Nimble version 0.13.1 and you must run this line 
 nimbleOptions(determinePredictiveNodesInModel = FALSE)
@@ -140,6 +141,11 @@ str(data$locs) #possibly telemetry. n.marked x tlocs x 2 array (or ragged array 
 #Rows are 1:n.marked individuals, columns are max telemetry points for a single
 #individual, fill in NAs for inds with no telemetry and/or inds without max number of telemetry points.
 #in latter case, order telemetry points first, then NAs
+
+#function to test for errors in mask set up. 
+mask.check(dSS=data$dSS,cells=data$cells,n.cells=data$n.cells,n.cells.x=data$n.cells.x,
+           n.cells.y=data$n.cells.y,res=data$res,xlim=data$xlim,ylim=data$ylim,
+           x.vals=data$x.vals,y.vals=data$y.vals)
 
 ####Fit model in Nimble####
 if(marktype=="natural"){
