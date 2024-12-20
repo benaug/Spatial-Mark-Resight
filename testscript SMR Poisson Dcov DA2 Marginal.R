@@ -116,7 +116,7 @@ lambda.cell <- exp(D.beta0 + D.beta1*D.cov)*cellArea
 sum(lambda.cell) #expected N in state space
 
 image(x.vals,y.vals,matrix(lambda.cell,n.cells.x,n.cells.y),main="Expected Density",col=cols1)
-points(X,pch=4,cex=0.75)
+points(X,pch=4,cex=1,lwd=2)
 
 #Simulate some data
 #setting seed here because I am setting a seed to produce the D.cov and you will simulate the same
@@ -125,7 +125,7 @@ set.seed(143532) #change seed for new data set
 data <- sim.SMR.Dcov(D.beta0=D.beta0,D.beta1=D.beta1,
                 D.cov=D.cov,InSS=InSS,n.marked=n.marked,marktype=marktype,
                 theta.marked=theta.marked,theta.unmarked=theta.unmarked,
-                lam0=lam0,sigma=sigma,K=K,X=X,buff=buff,tlocs=tlocs,
+                lam0=lam0,sigma=sigma,K=K,X=X,xlim=xlim,ylim=ylim,tlocs=tlocs,
                 obstype=obstype)
 points(data$s,pch=16) #add activity centers
 
