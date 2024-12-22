@@ -81,8 +81,8 @@ if(marktype=="natural"){
   M1 <- n.marked #Set to n.marked if premarked.
 }
 M2 <- c(125,135,145) #Augmentation level for unmarked
-#Monitor N.M and N.UM, marked and unmarked ind abundance to make sure N.M does not hit M1
-#and N.UM does not hit M1+M2 during sampling. If so, raise the offending M and run again.
+#Monitor N.M and N, marked and total ind abundance to make sure N.M does not hit M1 (unless known)
+#and N does not hit M1+M2 during sampling. If so, raise the offending M and run again.
 M.both <- M1+M2
 #Need some inits to initialize data
 #Use reasonable inits for lam0 and sigma since we check to make sure initial observation

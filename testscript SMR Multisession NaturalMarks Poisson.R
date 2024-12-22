@@ -81,8 +81,8 @@ head(data$ID.marked) #true ID's for marked and identified samples ()
 ####Fit model in Nimble####
 M1 <- rep(40,N.session) #Augmentation level for marked.
 M2 <- c(115,125,135) #Augmentation level for unmarked
-#Monitor N.M and N.UM, marked and unmarked ind abundance to make sure N.M does not hit M1
-#and N.UM does not hit M1+M2 during sampling. If so, raise the offending M and run again.
+#Monitor N.M and N, marked and total ind abundance to make sure N.M does not hit M1
+#and N does not hit M1+M2 during sampling. If so, raise the offending M and run again.
 M.both <- M1 + M2
 #Need some inits to initialize data
 #Use reasonable inits for lam0 and sigma since we check to make sure initial observation
