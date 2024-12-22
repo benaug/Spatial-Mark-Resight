@@ -2,6 +2,7 @@ sSampler <- nimbleFunction(
   # name = 'sampler_RW',
   contains = sampler_BASE,
   setup = function(model, mvSaved, target, control) {
+    g <- control$g
     i <- control$i
     J <- control$J
     res <- control$res
@@ -9,6 +10,7 @@ sSampler <- nimbleFunction(
     ylim <- control$ylim
     n.cells.x <- control$n.cells.x
     n.cells.y <- control$n.cells.y
+    n.locs.ind <- control$n.locs.ind
     M1 <- control$M1
     ## control list extraction
     # logScale            <- extractControlElement(control, 'log',                 FALSE)
@@ -23,6 +25,11 @@ sSampler <- nimbleFunction(
     s.nodes <- c(model$expandNodeNames(paste("s[",i,",",1:2,"]")),
                  model$expandNodeNames(paste("s.cell[",i,"]")),
                  model$expandNodeNames(paste("dummy.data[",i,"]")))
+    #if we have telemetry for this individual, add locs to s.nodes
+    if(n.locs.ind>0){
+      loc.nodes <- model$expandNodeNames(paste("locs[",i,",1:",n.locs.ind,",",1:2,"]"))
+      s.nodes <- c(s.nodes,loc.nodes)
+    }
     y.mID.nodes <- model$expandNodeNames(paste("y.mID[",i,",1:",J,"]"))
     y.mnoID.nodes <- model$expandNodeNames("y.mnoID")
     y.um.nodes <- model$expandNodeNames("y.um")

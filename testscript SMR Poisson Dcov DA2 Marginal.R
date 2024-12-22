@@ -177,45 +177,44 @@ D0.M.init <- D0.init*0.5
 D0.UM.init <- D0.init*0.5
 
 #must initialize N.M and N.UM to be consistent with z. speeds converge to set consistent with lambda.N.M/UM
-Niminits <- list(z=nimbuild$z,s=nimbuild$s,D0.M=D0.M.init,D0.UM=D0.UM.init,D.beta1=1,                         #set back to 0
+Niminits <- list(z=nimbuild$z,s=nimbuild$s,D0.M=D0.M.init,D0.UM=D0.UM.init,D.beta1=0,
                  N.M=sum(nimbuild$z[1:M1]),lambda.N.M=sum(nimbuild$z[1:M1]),
                  N.UM=sum(nimbuild$z[(M1+1):M.both]),lambda.N.UM=sum(nimbuild$z[(M1+1):M.both]),
                  theta.unmarked=c(0,0.5,0.5),lam0=inits$lam0,sigma=inits$sigma)
 
 
-#constants for Nimble
 J <- nrow(data$X)
+z.data <- c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
+dummy.data <- rep(0,M.both) #dummy data not used, doesn't really matter what the values are
+
+#Use this if you do not have telemetry. Make sure telemetry commented out in model file
 constants <- list(M1=M1,M.both=M.both,J=J,K1D=data$K1D,
                   D.cov=data$D.cov,cellArea=data$cellArea,n.cells=data$n.cells,
                   xlim=nimbuild$xlim,ylim=nimbuild$ylim,res=data$res)
 
-# Supply data to Nimble. Note, y.true and y.true.event are treated as completely latent (but known IDs enforced)
-z.data <- c(rep(1,data$n.marked),rep(NA,M.both-data$n.marked))
-dummy.data <- rep(0,M.both) #dummy data not used, doesn't really matter what the values are
 Nimdata <- list(y.mID=nimbuild$y.event[1:M1,,1], #marked with ID
                 y.mnoID=colSums((nimbuild$y.event[1:M1,,2])), #marked without ID
                 y.um=colSums((nimbuild$y.event[(M1+1):M.both,,2])), #unmarked
                 y.unk=colSums((nimbuild$y.event[1:M.both,,3])), #unk marked status
                 z=z.data,X=as.matrix(X),
                 dummy.data=dummy.data,cells=data$cells,InSS=data$InSS)
-#all samples accounted for
-sum(Nimdata$y.mID) + sum(Nimdata$y.mnoID) + sum(Nimdata$y.um) + sum(Nimdata$y.unk)
-sum(nimbuild$y.event)
 
-# #If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
-# constants <- list(M1=M1,M2=M2,M.both=M.both,J=J,K=K,K1D=data$K1D,
-#                   cellArea=data$cellArea,n.cells=data$n.cells,
+#If you have telemetry use these instead. Make sure to uncomment telemetry BUGS code.
+# constants <- list(M1=M1,M.both=M.both,J=J,K1D=data$K1D,
+#                   D.cov=data$D.cov,cellArea=data$cellArea,n.cells=data$n.cells,
 #                   xlim=nimbuild$xlim,ylim=nimbuild$ylim,res=data$res,tel.inds=nimbuild$tel.inds,
 #                   n.tel.inds=length(nimbuild$tel.inds),n.locs.ind=nimbuild$n.locs.ind)
 # Nimdata <- list(y.mID=nimbuild$y.event[1:M1,,1], #marked with ID
-#                 y.mnoID=rowSums((nimbuild$y.event[1:M1,,2])), #marked without ID
-#                 y.um=rowSums((nimbuild$y.event[(M1+1):M.both,,2])), #unmarked
-#                 y.unk=rowSums((nimbuild$y.event[1:M.both,,3])), #unk marked status
-#                 z=z.data,X=as.matrix(X),dummy.data=dummy.data,cells=cells,InSS=data$InSSlocs=data$locs)
+#                 y.mnoID=colSums((nimbuild$y.event[1:M1,,2])), #marked without ID
+#                 y.um=colSums((nimbuild$y.event[(M1+1):M.both,,2])), #unmarked
+#                 y.unk=colSums((nimbuild$y.event[1:M.both,,3])), #unk marked status
+#                 z=z.data,X=as.matrix(X),
+#                 dummy.data=dummy.data,cells=data$cells,InSS=data$InSS,
+#                 locs=data$locs)
 
 # set parameters to monitor
 parameters <- c('D0','D0.M','D0.UM','lambda.N.M','lambda.N.UM','lam0','sigma','theta.marked','theta.unmarked',
-             'N.M','N.UM','N',"D.beta1")
+             'N.M','N.UM','N','D.beta1')
 parameters2 <- c("lambda.cell","s.cell",'D0') #record D0 here for plotting
 
 # Build the model, configure the mcmc, and compile
@@ -223,7 +222,6 @@ start.time <- Sys.time()
 Rmodel <- nimbleModel(code=NimModel, constants=constants, data=Nimdata,check=FALSE,inits=Niminits)
 #use block sampler below for 'D0.M','D0.UM','D.beta1'
 config.nodes <- c('lam0','sigma','theta.marked','theta.unmarked[2:3]')
-# config.nodes <- c()
 conf <- configureMCMC(Rmodel,monitors=parameters, thin=1,
                       monitors2=parameters2,thin2=10,nodes=config.nodes)
 
@@ -241,7 +239,6 @@ z.ups <- round(c(M1*0.25,M2*0.25)) #doing 25% of M1 and M2 here
 J <- nrow(data$X)
 
 #nodes used for update, calcNodes + z nodes
-# y.nodes <- Rmodel$expandNodeNames(paste("y.full[1:",M.both,",1:",J,"]"))
 lam.nodes <- Rmodel$expandNodeNames(paste("lam[1:",M.both,",1:",J,"]"))
 y.mID.nodes <- Rmodel$expandNodeNames(paste("y.mID[1:",M1,",1:",J,"]"))
 y.mnoID.nodes <- Rmodel$expandNodeNames(paste("y.mnoID[1:",J,"]"))
@@ -273,13 +270,28 @@ conf$addSampler(target = paste("N.UM"),
                 silent = TRUE)
 
 #add sSampler
+#if no telemetry,
 for(i in 1:M.both){
   conf$addSampler(target = paste("s[",i,", 1:2]", sep=""),
                   type = 'sSampler',control=list(i=i,J=J,res=data$res,n.cells.x=data$n.cells.x,n.cells.y=data$n.cells.y,
-                                                 xlim=nimbuild$xlim,ylim=nimbuild$ylim,
+                                                 xlim=nimbuild$xlim,ylim=nimbuild$ylim,n.locs.ind=0,
                                                  M1=M1,scale=0.25),silent = TRUE)
   #scale parameter here is just the starting scale. It will be tuned.
 }
+#with telemetry,
+# for(i in 1:M.both){
+#   if(i %in% nimbuild$tel.inds){#inds with telemetry
+#     conf$addSampler(target = paste("s[",i,", 1:2]", sep=""),
+#                     type = 'sSampler',control=list(i=i,J=J,res=data$res,n.cells.x=data$n.cells.x,n.cells.y=data$n.cells.y,
+#                                                    xlim=nimbuild$xlim,ylim=nimbuild$ylim,n.locs.ind=nimbuild$n.locs.ind[i],
+#                                                    M1=M1,scale=0.25),silent = TRUE)
+#   }else{ #inds with no telemetry
+#     conf$addSampler(target = paste("s[",i,", 1:2]", sep=""),
+#                     type = 'sSampler',control=list(i=i,J=J,res=data$res,n.cells.x=data$n.cells.x,n.cells.y=data$n.cells.y,
+#                                                    xlim=nimbuild$xlim,ylim=nimbuild$ylim,n.locs.ind=0,
+#                                                    M1=M1,scale=0.25),silent = TRUE)
+#   }
+# }
 
 #can add block sampler if lam0, sigma, lambda.N.UM, and/or lambda.N.M (if N.M unknown) posteriors highly correlated
 #RW_block faster, AFslice slower, but mixes better
@@ -310,25 +322,27 @@ plot(mcmc(mvSamples[200:nrow(mvSamples),]))
 exp(D.beta0)
 data$N
 
-cor(mcmc(mvSamples[200:nrow(mvSamples),]))
+cor(mvSamples[200:nrow(mvSamples),])
 
 #Important! If N.UM hits M2 during sampling, raise M2. 
 #For an unknown number of marked individuals, if N.M hits M1 during sampling, raise M1.
 
+#plot density surface, etc.
 mvSamples2  <-  as.matrix(Cmcmc$mvSamples2)
 lambda.cell.idx <- grep("lambda.cell",colnames(mvSamples2))
 D0.idx <- grep("D0",colnames(mvSamples2))
 burnin2 <- 10
 
-
-#compare expected D plot to truth
-#image will show 
-#posterior means
-lambda.cell.post <- cellArea*mvSamples2[burnin2:nrow(mvSamples2),D0.idx]*mvSamples2[burnin2:nrow(mvSamples2),lambda.cell.idx]
-lambda.cell.ests <- colMeans(lambda.cell.post)
-#remove non-habitat
-lambda.cell.ests[InSS==0] <- NA
-lambda.cell[InSS==0] <- NA
+#compare expected D plot to truth (for simulated data sets)
+n.cells <- data$n.cells
+lambda.cell <- exp(D.beta0 + D.beta1*D.cov)*cellArea
+n.iter.use <- burnin2:nrow(mvSamples2)
+lambda.cell.post <- t(cellArea*mvSamples2[n.iter.use,D0.idx]*mvSamples2[n.iter.use,lambda.cell.idx[1:n.cells]])
+lambda.cell.ests <- rowMeans(lambda.cell.post[1:n.cells,])
+lambda.cell.HPDs <- HPDinterval(mcmc(t(lambda.cell.post[1:n.cells,])))
+#remove nonhabitat (or not, comment out)
+lambda.cell[data$InSS==0] <- NA
+lambda.cell.ests[data$InSS==0] <- NA
 
 par(mfrow=c(1,1),ask=FALSE)
 zlim <- range(c(lambda.cell,lambda.cell.ests),na.rm=TRUE) #use same zlim for plots below
@@ -337,5 +351,12 @@ image(x.vals,y.vals,matrix(lambda.cell,n.cells.x,n.cells.y),main="Expected Densi
 #estimate, posterior means
 image(x.vals,y.vals,matrix(lambda.cell.ests,n.cells.x,n.cells.y),main="Expected Density",zlim=zlim)
 
-
+#cell ests and 95% HPDs vs. truth. 
+#Need a lot of posterior samples for accurate 95% HPDs, if not, will look "jagged"
+idx <- order(lambda.cell)
+plot(lambda.cell.ests[1:n.cells][idx]~lambda.cell[1:n.cells][idx],type="l",lwd=2,
+     main="True vs. Estimated Density",ylim=range(lambda.cell.HPDs[1:n.cells,]))
+lines(lambda.cell.HPDs[1:n.cells,1][idx]~lambda.cell[1:n.cells][idx],lty=2)
+lines(lambda.cell.HPDs[1:n.cells,2][idx]~lambda.cell[1:n.cells][idx],lty=2)
+abline(0,1,col="darkred",lwd=2) #1:1 expectation
 

@@ -23,7 +23,6 @@ NimModel <- nimbleCode({
   #Density model
   D.intercept.M <- D0.M*cellArea
   D.intercept.UM <- D0.UM*cellArea
-  # D.intercept <- exp(D.beta0)*cellArea
   lambda.cell[1:n.cells] <- InSS[1:n.cells]*exp(D.beta1*D.cov[1:n.cells])
   pi.cell[1:n.cells] <- lambda.cell[1:n.cells]/pi.denom #expected proportion of total N in cell c
   pi.denom <- sum(lambda.cell[1:n.cells])
@@ -77,7 +76,7 @@ NimModel <- nimbleCode({
   lam.unk[1:J] <- bigLam.marked[1:J]*K1D[1:J]*theta.marked[3] + bigLam.unmarked[1:J]*K1D[1:J]*theta.unmarked[3]
   y.unk[1:J] ~ dPoissonVector(lam.unk[1:J],z=1) #plug in z=1 to reuse dPoissonVector
   
-  # #If you have telemetry
+  #If you have telemetry
   # for(i in 1:n.tel.inds){
   #   for(m in 1:n.locs.ind[i]){
   #     locs[tel.inds[i],m,1] ~ dnorm(s[tel.inds[i],1],sd=sigma)
