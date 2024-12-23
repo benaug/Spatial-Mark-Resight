@@ -194,7 +194,7 @@ D0.M.init <- D0.init*0.5
 D0.UM.init <- D0.init*0.5
 
 Niminits <- list(N=N.init,N.M=N.M.init,N.UM=N.UM.init,
-                 z=nimbuild$z.init,N=rowSums(nimbuild$z.init),s=nimbuild$s.init,
+                 z=nimbuild$z.init,s=nimbuild$s.init,
                  lam0.fixed=0.5,sigma.fixed=0.5,D0.M=D0.M.init,D0.UM=D0.UM.init,
                  D.beta1=rep(0,N.session))
 
