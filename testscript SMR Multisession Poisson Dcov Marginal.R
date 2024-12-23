@@ -37,7 +37,7 @@ marktype <- "premarked" #are individuals premarked, or naturally marked? This te
 obstype <- "poisson"
 tlocs <- c(0,0,0) #number of telemetry locs/marked individual in each session. For "premarked"
 
-#make an SCR trapping array surrounded by USCR traps. Making the trapping array size vary by session
+#make an SCR trapping array. Making the trapping array size vary by session
 X <- vector("list",N.session)
 X[[1]] <- as.matrix(expand.grid(1:10,1:10))
 X[[2]] <- as.matrix(expand.grid(1:9,1:9))
