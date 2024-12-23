@@ -8,6 +8,7 @@ source("NimbleFunctions SMR Multisession Poisson Dcov Marginal.R")
 source("init.SMR.multisession.Dcov.R")
 source("init.SMR.Dcov.R") #used by multisession initializer
 source("sSampler Multisession Poisson Dcov Marginal.R")
+source("mask.check.R")
 
 #If using Nimble version 0.13.1 and you must run this line 
 nimbleOptions(determinePredictiveNodesInModel = FALSE)
@@ -135,6 +136,24 @@ head(t(data[[g]]$this.j)) #trap of capture for each sample
 head(t(data[[g]]$this.k)) #occasion of each capture for each sample (not used in this "2D" sampler)
 head(data[[g]]$ID.marked) #true ID's for marked and identified samples ()
 str(data[[g]]$locs) #possibly telemetry. N.session x n.marked x tlocs x 2 array (or ragged array if number of locs/ind and/or session differ). 
+
+#Visualize activity centers
+for(g in 1:N.session){
+  lambda.cell <- exp(D.beta0[g] + D.beta1[g]*D.cov[[g]])*cellArea[g]
+  image(x.vals[[g]],y.vals[[g]],matrix(lambda.cell,n.cells.x[g],n.cells.y[g]),main=paste("Session",g," Expected Density"))
+  points(X[[g]],pch=4,cex=0.75)
+  points(data[[g]]$s,pch=16)
+}
+
+for(g in 1:N.session){
+  #function to test for errors in mask set up. 
+  mask.check(dSS=data[[g]]$dSS,cells=data[[g]]$cells,n.cells=data[[g]]$n.cells,n.cells.x=data[[g]]$n.cells.x,
+             n.cells.y=data[[g]]$n.cells.y,res=data[[g]]$res,xlim=data[[g]]$xlim,ylim=data[[g]]$ylim,
+             x.vals=data[[g]]$x.vals,y.vals=data[[g]]$y.vals)
+}
+
+
+
 
 ####Fit model in Nimble####
 if(marktype=="natural"){

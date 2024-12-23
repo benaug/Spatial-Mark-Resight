@@ -33,7 +33,6 @@ sim.SMR.multisession.Dcov <-
     }
     if(length(theta.unmarked)!=N.session)stop("theta.unmarked must be of length N.session")
     
-    library(abind)
     J <- rep(NA,N.session)
     for(g in 1:N.session){
       X[[g]] <- as.matrix(X[[g]])
