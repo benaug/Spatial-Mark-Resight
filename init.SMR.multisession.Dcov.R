@@ -6,6 +6,9 @@ e2dist <- function (x, y){
 
 init.SMR.multisession.Dcov <- function(data,inits=NA,M1=NA,M2=NA,marktype="premarked",obstype="poisson"){
   N.session <- length(data)
+  if(length(M1)!=N.session)stop("Must supply an M1 for each session.")
+  if(length(M2)!=N.session)stop("Must supply an M2 for each session.")
+  
   init.session <- vector("list",N.session)
   for(g in 1:N.session){
     inits.use <- inits #lam0 and sigma inits vary by session
