@@ -294,7 +294,7 @@ for(g in 1:N.session){
 for(g in 1:N.session){
   for(i in 1:M.both[g]){
     conf$addSampler(target = paste("s[",g,",",i,", 1:2]", sep=""),
-                    type = 'sSampler',control=list(i=i,g=g,J=J[g],res=nimbuild$res[g],n.cells=nimbuild$n.cells[g],
+                    type = 'sSampler',control=list(i=i,g=g,J=J[g],n.cells=nimbuild$n.cells[g],
                                                    n.cells.x=nimbuild$n.cells.x[g],n.cells.y=nimbuild$n.cells.y[g],
                                                    xlim=nimbuild$xlim[g,],ylim=nimbuild$ylim[g,],res=nimbuild$res[g],
                                                    M1=M1[g],n.locs.ind=0,scale=1),silent = TRUE)
