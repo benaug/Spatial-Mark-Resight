@@ -167,6 +167,8 @@ inits <- list(lam0=lam0,sigma=sigma)
 #This function structures the simulated data to fit the model in Nimble (some more restructing below)
 #Also checks some inits
 nimbuild <- init.SMR.Dcov(data,inits,M1=M1,M2=M2,marktype=marktype,obstype="poisson")
+image(x.vals,y.vals,matrix(D.cov,n.cells.x,n.cells.y),main="D.cov",xlab="X",ylab="Y",col=cols1)
+points(X,pch=4)
 points(nimbuild$s,pch=16) #initialized activity centers
 
 #inits for nimble
