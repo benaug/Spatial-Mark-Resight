@@ -64,7 +64,7 @@ init.SMR.multisession.Dcov <- function(data,inits=NA,M1=NA,M2=NA,marktype="prema
   n.cells.y.max <- max(n.cells.y)
   res <- unlist(lapply(data,function(x){x$res}))
   cellArea <- res^2
-  xlim <- y.lim <- matrix(NA,N.session,2)
+  xlim <- ylim <- matrix(NA,N.session,2)
   x.vals <- matrix(NA,N.session,n.cells.x.max)
   y.vals <- matrix(NA,N.session,n.cells.y.max)
   dSS <- array(NA,dim=c(N.session,n.cells.max,2))
