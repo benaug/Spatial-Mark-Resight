@@ -2,7 +2,7 @@ NimModel <- nimbleCode({
   #detection function priors
   lam0 ~ dunif(0,15)
   sigma ~ dunif(0,10)
-
+  
   #sample type observation model priors (Dirichlet)
   alpha.marked[1] <- 1
   alpha.marked[2] <- 1
@@ -12,7 +12,7 @@ NimModel <- nimbleCode({
   theta.marked[1:3] ~ ddirch(alpha.marked[1:3])
   theta.unmarked[1] <- 0
   theta.unmarked[2:3] ~ ddirch(alpha.unmarked[1:2])
-
+  
   lambda.N.M ~ dunif(0,1000) #Expected N, marked
   lambda.N.UM ~ dunif(0,1000) #Expected N, unmarked
   N.M ~ dpois(lambda.N.M) #realized N in state space

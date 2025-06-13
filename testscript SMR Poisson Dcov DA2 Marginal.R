@@ -247,7 +247,7 @@ y.mnoID.nodes <- Rmodel$expandNodeNames(paste("y.mnoID[1:",J,"]"))
 y.um.nodes <- Rmodel$expandNodeNames(paste("y.um[1:",J,"]"))
 y.unk.nodes <- Rmodel$expandNodeNames(paste("y.unk[1:",J,"]"))
 bigLam.marked.nodes <- Rmodel$expandNodeNames("bigLam.marked") #only need this in calcNodes
-bigLam.unmarked.nodes <- Rmodel$expandNodeNames("bigLam.marked") #only need this in calcNodes
+bigLam.unmarked.nodes <- Rmodel$expandNodeNames("bigLam.unmarked") #only need this in calcNodes
 lam.mnoID.nodes <- Rmodel$expandNodeNames("lam.mnoID")
 lam.um.nodes <- Rmodel$expandNodeNames("lam.um")
 lam.unk.nodes <- Rmodel$expandNodeNames("lam.unk")
