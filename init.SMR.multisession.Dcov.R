@@ -40,7 +40,7 @@ init.SMR.multisession.Dcov <- function(data,inits=NA,M1=NA,M2=NA,marktype="prema
   }else{
     tel.inds <- n.locs.ind <- n.tel.inds <- NA
   }
- 
+  
   n.samples <- unlist(lapply(data,function(x){length(x$this.j)}))
   J <- unlist(lapply(data,function(x){nrow(x$X)}))
   n.marked <- unlist(lapply(data,function(x){x$n.marked}))
@@ -84,7 +84,6 @@ init.SMR.multisession.Dcov <- function(data,inits=NA,M1=NA,M2=NA,marktype="prema
     n.fixed[g] <- init.session[[g]]$n.fixed
     xlim[g,] <- data[[g]]$xlim
     ylim[g,] <- data[[g]]$ylim
-    K1D[g,1:J[g]] <- data[[g]]$K1D
     x.vals[g,1:n.cells.x[g]] <- data[[g]]$x.vals
     y.vals[g,1:n.cells.y[g]] <- data[[g]]$y.vals
     dSS[g,1:n.cells[g],] <- data[[g]]$dSS
@@ -142,5 +141,5 @@ init.SMR.multisession.Dcov <- function(data,inits=NA,M1=NA,M2=NA,marktype="prema
               res=res,cellArea=cellArea,x.vals=x.vals,xlim=xlim,ylim=ylim,
               y.vals=y.vals,dSS=dSS,InSS=InSS,cells=cells,n.cells=n.cells,n.cells.x=n.cells.x,
               n.cells.y=n.cells.y,D.cov=D.cov,dummy.data=dummy.data,z.data=z.data))
-
+  
 }
