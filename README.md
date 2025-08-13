@@ -4,3 +4,5 @@ Various spatial mark resight MCMC samplers in nimble allowing for all sample typ
 If you want to use individual ID covariates, there is a different Github project for that: Spatial-Mark-Resight-IDcov.
 
 This code contains contributions from Glenn Stauffer (though any problems should be blamed on me).
+
+Multisession models use N-prior data augmentation: https://github.com/benaug/SCR-N-Prior-Data-Augmentation
